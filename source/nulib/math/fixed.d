@@ -127,7 +127,7 @@ public:
 
     pragma(inline, true)
     size_t toHash() const @safe pure nothrow {
-        return this.data;
+        return cast(size_t)this.data;
     }
 
     pragma(inline, true)
