@@ -10,9 +10,9 @@ dependency "numem" version=">=1.3.1"
 dependency "nulib:stdc" version="*"
 
 // OS Integration
-dependency "nulib:os_win32" path="os/os_win32/"
-dependency "nulib:os_posix" path="os/os_posix/"
-// dependency "nulib:os_apple" path="os/os_apple/"
+dependency "nulib:os_win32" version="*"
+dependency "nulib:os_posix" version="*"
+// dependency "nulib:os_apple" version="*"
 
 // Basic configuration
 targetPath "out/"
