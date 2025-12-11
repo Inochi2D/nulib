@@ -26,8 +26,9 @@ import numem.lifetime;
 */
 struct Variant {
 private:
-    // Helper that's not nogc, to allow usage with druntime.
+    // Helpers that are not nogc, to allow usage with druntime.
     static bool isType(T)(TypeInfo id) => id == typeid(T);
+    static string getTypeName(TypeInfo id) => id.toString();
 
 @nogc:
     TypeInfo id;
@@ -87,13 +88,13 @@ public:
     }
 
     /**
-        Gets the content of the variant.
+        Tries to get the content of the variant.
 
         Returns:
             A $(D Option) value either containing the value
             or invalid state. 
     */
-    Option!T get(T)() @trusted nothrow {
+    Option!T tryGet(T)() @trusted nothrow {
         if (!has!(T)())
             return none!T();
         
@@ -101,6 +102,25 @@ public:
             return some!T(cast(T)data);
         else
             return some!T(*cast(T*)data);
+    }
+
+    /**
+        Gets the content of the variant.
+
+        Note:
+            This function will fatally crash if the variant
+            doesn't contain a value of the given type!
+    */
+    T get(T)() @trusted nothrow {
+        if (!has!(T)()) {
+            import nulib.string : nstring;
+            nu_fatal(nstring("Type mismatch between ", T.stringof, " and ", assumeNoThrowNoGC(&getTypeName, id), "!").take());
+        }
+        
+        static if (isHeapAllocated!T)
+            return cast(T)data;
+        else
+            return *cast(T*)data;
     }
 
     /// Allows assigning the variant to a value.
@@ -149,16 +169,17 @@ unittest {
     Variant v = 42;
     assert(v);
     assert(v.has!int);
-    assert(v.get!int);
-    assert((v.get!int).get == 42);
+    assert(!v.has!long);
+    assert(v.tryGet!int);
+    assert((v.tryGet!int).get == 42);
     v.free();
 
     // assign initialize
     v = 42;
     assert(v);
     assert(v.has!int);
-    assert(v.get!int);
-    assert((v.get!int).get == 42);
+    assert(v.tryGet!int);
+    assert((v.tryGet!int).get == 42);
     Variant v2 = v;
     assert(v == v2); // Is it a reference to the same data?
 
@@ -166,4 +187,13 @@ unittest {
     v.free();
     v2 = Variant.empty;
     assert(v == v2 && !v);
+}
+
+@("Variant: arrays")
+unittest {
+    Variant v = [0, 1, 2, 3].nu_dup();
+    assert(v);
+    assert(v.has!(int[]));
+    assert(v.tryGet!(int[]).get == [0, 1, 2, 3]);
+    v.free();
 }
