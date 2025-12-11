@@ -12,6 +12,7 @@ module nulib.string;
 import numem.core.hooks;
 import numem.core.traits;
 import numem.core.memory;
+import numem.core.meta;
 import numem;
 import nulib.collections.internal.marray;
 import nulib.text.unicode : 
@@ -294,6 +295,39 @@ public:
         }
     }
 
+    this(Args...)(auto ref Args args) @system
+    if(allSatisfy!(.isSomeString, Args)) {
+        if (__ctfe) {
+            this.flags |= STRFLAG_READONLY;
+            foreach(arg; args)
+                this.memory ~= cast(MemoryT)arg.sliceof;
+            this.memory ~= "\0";
+            
+        } else {
+
+            // Get combined length of strings.
+            size_t sz = 0;
+            static foreach(arg; args) {
+                sz += arg.sliceof.length;
+            }
+
+            // Allocate new string
+            char[] buffer = nu_malloca!T(sz);
+            size_t i; // Write offset
+            MemoryT tmp;
+            static foreach(arg; args) {
+                tmp = otherToSelf(arg.sliceof);
+                buffer[i..i+tmp.length] = tmp[0..$];
+                i += tmp.length;
+                nu_freea(tmp);
+            }
+            
+            // Teminate result.
+            this.memory = cast(MemoryT)buffer;
+            nu_terminate(memory);
+        }
+    }
+
     /**
         Copy-constructor
     */
@@ -569,6 +603,9 @@ unittest {
 unittest {
     auto str1 = nstring("Hello, ") ~ "world!";
     assert(str1 == "Hello, world!", str1.sliceof);
+
+    auto str2 = nstring("Hello, ", "world", " 2!"w);
+    assert(str2 == "Hello, world 2!");
 }
 
 @("nstring: concat convert")
