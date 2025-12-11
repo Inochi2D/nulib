@@ -5,73 +5,102 @@ import numem.core.traits;
 import numem.core.lifetime;
 import numem.object;
 
-alias Event(RecvType, ArgTypes...) = void function(void* sender, RecvType self, ArgsTypes...) @nogc;
+/**
+    A type for an event.
+*/
+alias Event(SenderType, ArgTypes...) = void function(SenderType, ArgTypes) @nogc;
 
 /**
-    An event handler, which allows mass dispatching to callbacks.
-
-    Params:
-        RecvType = The (base) type of the reciever object.
-        ArgTypes = The types of the arguments to pass to the reciever handler.
+    Gets whether the given type is an event callback function.
 */
-struct EventHandler(RecvType, ArgTypes...) {
+enum isEvent(T) = is(T : void function(SenderType, ArgTypes) @nogc, SenderType, ArgTypes...);
+
+/**
+    Gets the sender type of an event type $(D T).
+*/
+template EventSenderType(T) {
+    static if (is(T : void function(SenderType, ArgTypes), SenderType, ArgTypes...))
+        alias EventSenderType = SenderType;
+    else
+        alias EventSenderType = void;
+}
+
+/**
+    Gets the argument types of an event type $(D T).
+*/
+template EventArgs(T) {
+    static if (is(T : void function(SenderType, ArgTypes), SenderType, ArgTypes...))
+        alias EventArgs = ArgTypes;
+    else
+        alias EventArgs = void;
+}
+
+/**
+    An event handler which stores events internally.
+*/
+struct EventHandler(EventT)
+if (isEvent!EventT) {
 private:
 @nogc:
-    struct _EventListener {
-        RecvType listener;
-        Event!(RecvType, ArgTypes) callback;
-    }
-
-    vector!_EventListener listeners_;
-
-    ptrdiff_t findListener(RecvType recv) {
-        foreach(i; 0..listeners_.length) {
-            if (listeners_[i] is recv) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    void addListener(_EventListener listener) {
-        if (findListener(listener.listener) >= 0)
-            return;
-        
-        static if (isValidObjectiveC!RecvType) {
-            listener.listener.retain();
-        } else static if (is(T : NuRefCounted)) {
-            listener.listener.retain();
-        }
-
-        listeners_ ~= listener;
-    }
-
-    void removeListener(RecvType listener) {
-        if (auto lidx = findListener(listener.listener) >= 0) {
-            listeners_.remove(lidx);
-        }
-    }
+    vector!EventT events_;
 
 public:
-    alias EventType = Event!(RecvType, ArgTypes);
-
 
     /**
-        The amount of listeners currently bound to the event handler.
+        The callbacks registered with the handler.
     */
-    @property size_t listeners() { return listeners_.length; }
+    @property EventT[] callbacks() => events_[];
 
     /**
-        Adds a listener to the event.
+        Type of the accepted event callback functions.
     */
-    void opOpAssign(string op = "~", alias sptr = this)(EventType callback, RecvType self = sptr) {
-        this.addListener(_EventListener(self, callback));
+    alias EventType = EventT;
+
+    /**
+        The type of accepted event senders.
+    */
+    alias SenderType = EventSenderType!EventT;
+
+    /**
+        The type of accepted event arguments.
+    */
+    alias ArgTypes = EventArgs!EventT;
+
+    /**
+        Adds an event to the handler.
+    */
+    void opOpAssign(string op)(EventT event)
+    if (op == "~") {
+        events_ ~= event;
     }
 
     /**
-        Removes a listener from the event.
+        Adds an event to the handler.
     */
-    void opOpAssign(string op = "-", alias sptr = this)(RecvType self) {
-        this.removeListener(self);
+    void opOpAssign(string op)(EventT event)
+    if (op == "-") {
+        events_.remove(event);
     }
+
+    /**
+        Calls all the events in the handler.
+    */
+    void opCall(SenderType sender, ArgTypes args) {
+        foreach(event; events_) {
+            event(sender, args);
+        }
+    }
+}
+
+@("EventHandler")
+unittest {
+    __gshared int vx;
+
+    EventHandler!(Event!(void*, int)) handler;
+    handler ~= (void* sender, int v) {
+        vx += v;
+    };
+
+    handler(null, 42);
+    assert(vx == 42);
 }
