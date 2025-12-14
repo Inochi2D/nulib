@@ -6,7 +6,7 @@ license "BSL-1.0"
 
 toolchainRequirements ldc=">=1.40.0" frontend=">=2.106"
 
-dependency "numem" version=">=1.6.0"
+dependency "numem" version=">=1.6.2"
 dependency "nulib:stdc" version="*"
 
 // OS Integration
