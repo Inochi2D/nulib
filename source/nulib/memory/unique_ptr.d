@@ -89,7 +89,7 @@ public:
     /**
         Disable copying.
     */
-    @disable this()(ref inout(typeof(this)) src);
+    @disable this()(ref return scope inout(typeof(this)) src);
     @disable this(this);
 
     /**

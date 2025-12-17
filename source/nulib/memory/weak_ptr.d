@@ -70,10 +70,8 @@ public:
     /**
         Copy Constructor.
     */
-    this(ref inout(typeof(this)) src) {
-        auto srcobj = cast(Unqual!(typeof(this)))src;
-
-        this.ptr = srcobj.ptr;
+    this(ref return scope inout(typeof(this)) src) {
+        this.ptr = cast(typeof(ptr))src.ptr;
         this.ptr.retain!false;
     }
 }
