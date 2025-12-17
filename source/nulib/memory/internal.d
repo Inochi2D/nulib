@@ -80,7 +80,7 @@ struct __refcount_t(T) {
         return selfptr;
     }
 
-    ref Ref!T get() @trusted nothrow {
+    ref Unref!T get() @trusted nothrow {
         static if (is(Ref!T == T))
             return ptr;
         else
