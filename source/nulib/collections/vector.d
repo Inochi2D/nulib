@@ -123,7 +123,7 @@ public:
     */
     this(ref return scope inout(SelfType) rhs) @trusted {
         if (__ctfe) {
-            this = rhs;
+            this = cast(typeof(this))rhs;
         } else {
             static if (hasElaborateMove!T) {
                 memory.resize(rhs.length);
