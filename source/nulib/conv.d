@@ -95,14 +95,17 @@ nstring to_string(T)(T value) @nogc {
         
         return to_string_impl("%p", value);
     } else static if (__traits(isIntegral, T)) {
-        enum ifmtstr = __traits(isUnsigned, T) ? "%.*u" : "%.*i";
-
-        return to_string_impl(ifmtstr, T.sizeof, value);
+        
+        static if (__traits(isUnsigned, T)) {
+            return to_string_impl("%llu", cast(ulong)value);
+        } else {
+            return to_string_impl("%lld", cast(long)value);
+        }
     } else static if (__traits(isFloating, T)) {
 
         return to_string_impl("%f", value);
     } else {
-        
+
         return nstring(T.stringof);
     }
 }
