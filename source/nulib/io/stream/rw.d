@@ -175,9 +175,12 @@ public:
             The UTF8 string read from the stream.
     */
     nstring readUTF8(uint length) @trusted {
-        nstring result = nstring(length);
-        ptrdiff_t read = stream.read(cast(ubyte[])result.value);
-        return read <= 0 ? nstring.init : result;
+        char[] buffer = nu_malloca!char(length);
+        ptrdiff_t read = stream.read(cast(ubyte[])buffer);
+        
+        nstring result = nstring(buffer[0..read]);
+        nu_freea(buffer);
+        return result;
     }
 
     /**
