@@ -15,6 +15,7 @@ import numem.core.exception;
 import numem.core.hooks;
 import numem.optional;
 import numem.lifetime;
+import numem.object;
 
 /**
     A type which can contain any type in the language, stored on the heap.
@@ -27,17 +28,90 @@ import numem.lifetime;
 struct Variant {
 private:
     // Helpers that are not nogc, to allow usage with druntime.
-    static bool isType(T)(TypeInfo id) => id == typeid(T);
+    static bool isType(T)(TypeInfo id) {
+        static if (is(T == class))
+            auto selfTid = cast(TypeInfo_Class)typeid(T);
+        else static if (is(T == interface))
+            auto selfTid = cast(TypeInfo_Interface)typeid(T);
+        else
+            auto selfTid = typeid(T);
+        
+        static if (is(T == class) || is(T == interface)) {
+            if (auto tid = cast(TypeInfo_Class)typeid(T)) {
+                return tid.isBaseOf(selfTid);
+            }
+            if (auto tid = cast(TypeInfo_Interface)typeid(T)) {
+                return tid.isBaseOf(selfTid);
+            }
+        }
+        return id == typeid(T);
+    }
     static string getTypeName(TypeInfo id) => id.toString();
+    alias destroyFuncT = void function(void* data) @nogc;
 
 @nogc:
+
     TypeInfo id;
+    destroyFuncT destroyFunc;
     void* data;
 
     // Internal ctor
-    this(TypeInfo id, void* data) @trusted nothrow {
+    this(TypeInfo id, void* data, void function(void* data) @nogc destroyFunc) @trusted nothrow {
         this.id = id;
+        this.destroyFunc = destroyFunc;
         this.data = data;
+    }
+
+    /// Helper that frees values.
+    pragma(inline, true)
+    void freeValue() @trusted nothrow {
+        if (destroyFunc && data !is null)
+            assumeNoThrowNoGC(destroyFunc, data);
+
+        this.id = null;
+        this.destroyFunc = null;
+        this.data = null;
+    }
+
+    /// Helper that sets values.
+    pragma(inline, true)
+    void setValue(T)(auto ref T value) @trusted nothrow {
+        static if (is(T == Variant)) {
+            this.id = value.id;
+            this.destroyFunc = value.destroyFunc;
+            this.data = value.data;
+        } else {
+            this.id = typeid(T);
+
+            static if (isArray!T) {
+                this.destroyFunc = (void* value) {
+                    T tmp = *cast(T*)value;
+                    nogc_trydelete(tmp[0..$]);
+                    nu_free(value);
+                };
+            } else static if (hasAnyDestructor!T) {
+                this.destroyFunc = (void* value) {
+                    static if (isHeapAllocated!T)
+                        T* tmp = cast(T*)&value;
+                    else
+                        T* tmp = cast(T*)value;
+                    
+                    nogc_trydelete(*tmp);
+                };
+            } else {
+                this.destroyFunc = (void* value) {
+                    nu_free(value);
+                };
+            }
+            
+            static if (isHeapAllocated!T) {
+                this.data = cast(void*)value;
+            } else {
+                
+                this.data = nu_malloc(T.sizeof);
+                *(cast(T*)this.data) = value.move();
+            }
+        }
     }
 
 public:
@@ -46,7 +120,7 @@ public:
     /**
         An empty variant.
     */
-    enum empty = Variant(null, null);
+    enum empty = Variant(null, null, null);
 
     /**
         Whether the variant is empty.
@@ -59,21 +133,15 @@ public:
     @property bool isInitialized() @trusted nothrow pure => id !is null && data !is null;
 
     /**
+        The type of the value stored in the variant.
+    */
+    @property TypeInfo type() @trusted nothrow pure => id;
+
+    /**
         Constructor
     */
     this(T)(auto ref T value) @trusted nothrow {
-        static if (is(T == Variant)) {
-            this.id = value.id;
-            this.data = value.data;
-        } else {
-            this.id = typeid(T);
-            static if (isHeapAllocated!T)
-                this.data = cast(void*)value;
-            else {
-                this.data = nu_malloc(T.sizeof);
-                *(cast(T*)this.data) = value.move();
-            }
-        }
+        this.setValue!T(value);
     }
 
     /**
@@ -125,18 +193,7 @@ public:
 
     /// Allows assigning the variant to a value.
     void opAssign(T)(auto ref T value) @trusted nothrow {
-        static if (is(T == Variant)) {
-            this.id = value.id;
-            this.data = value.data;
-        } else {
-            this.id = typeid(T);
-            static if (isHeapAllocated!T)
-                this.data = cast(void*)value;
-            else {
-                this.data = nu_malloc(T.sizeof);
-                *(cast(T*)this.data) = value.move();
-            }
-        }
+        this.setValue!T(value);
     }
 
     /**
@@ -154,11 +211,7 @@ public:
             question. 
     */
     void free() @trusted nothrow {
-        this.id = null;
-        if (data) {
-            nu_free(data);
-            this.data = null;
-        }
+        this.freeValue();
     }
 }
 
@@ -187,6 +240,18 @@ unittest {
     v.free();
     v2 = Variant.empty;
     assert(v == v2 && !v);
+}
+
+@("Variant: classes")
+unittest {
+    static bool destroyed__ = false;
+    static class TestClass { ~this() { destroyed__ = true; } uint t = 0; }
+
+    Variant obj = nogc_new!TestClass();
+    assert(obj.get!Object());
+    
+    obj.free();
+    assert(destroyed__);
 }
 
 @("Variant: arrays")
