@@ -4,38 +4,40 @@ authors "Luna"
 copyright "Copyright © 2025, Luna"
 license "BSL-1.0"
 
-toolchainRequirements ldc=">=1.40.0" frontend=">=2.106"
-
-dependency "numem" version=">=1.6.3"
-dependency "nulib:stdc" version="*"
-
-// OS Integration
-dependency "nulib:os_win32" version="*"
-dependency "nulib:os_posix" version="*"
-// dependency "nulib:os_apple" version="*"
-
 // Basic configuration
+toolchainRequirements ldc=">=1.40.0" frontend=">=2.106"
 targetPath "out/"
 
-subPackage "os/os_win32"
-subPackage "os/os_posix"
-// subPackage "os/os_apple"
+// Implements the base of nulib.
+dependency "numem" version=">=1.6.3"
+importPaths "src/"
+sourcePaths "src/"
 
-// Sub-packages
-subPackage "modules/com"
-subPackage "modules/objc"
-subPackage "modules/stdc"
-subPackage "modules/win32"
+// nulib:system
+subPackage "system" {
 
-buildRequirements "allowWarnings" platform="gdc"
+}
 
-// Needed for ddox.
-dflags "-oq" platform="ldc"
-x:ddoxFilterArgs "--min-protection=Public" \
-    "--ex" "nulib.collections.internal" \
-    "--ex" "nulib.memory.internal" \
-    "--ex" "nulib.threading.internal"
+// nulib:collections
+subPackage {
+    name "collections"
+    description "Various types of data collections"
+    targetType "staticLibrary"
+    dependency "numem" version="*"
 
+    sourceFiles "ext/nulib/collections/**/*.d"
+    importPaths "ext/nulib/collections/"
+}
+
+// nulib:threading
+subPackage {
+    name "threading"
+    targetType "staticLibrary"
+    dependency "numem" version="*"
+
+    description "Threading support for nulib"
+    sourceFiles "source/nulib/threading/**/*.d"
+}
 
 // Build configurations, static should be preferred.
 // Do NOT change the order of these.
