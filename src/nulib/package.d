@@ -15,6 +15,6 @@
 */
 module nulib;
 
-public import nulib.object;
+public import numem.object;
 public import nulib.string;
 public import nulib.collections;

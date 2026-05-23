@@ -18,17 +18,6 @@ subPackage "system" {
 
 }
 
-// nulib:collections
-subPackage {
-    name "collections"
-    description "Various types of data collections"
-    targetType "staticLibrary"
-    dependency "numem" version="*"
-
-    sourceFiles "ext/nulib/collections/**/*.d"
-    importPaths "ext/nulib/collections/"
-}
-
 // nulib:threading
 subPackage {
     name "threading"

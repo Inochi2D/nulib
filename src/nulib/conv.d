@@ -9,18 +9,155 @@
     Authors:   Luna Nielsen
 */
 module nulib.conv;
-import nulib.c.stdlib;
-import nulib.c.stdio;
+import numem.core.math;
 import nulib.string;
-import nulib.math;
-import nulib.text.ascii;
-import numem.core.traits;
-import numem.core.hooks;
-import numem.core.exception;
 
 // TODO:    This entire module should be rewritten into pure D.
 //          Relying on the C standard library here is probably
 //          not the best idea for portability.
+
+
+/**
+    Parses an integer of the given base.
+
+    Params:
+        source = The source string to parse.
+    
+    Returns:
+        The integer parsed from the source string.
+*/
+T parseInt(T, S, int base = 10)(auto ref S source) @nogc nothrow pure
+if (__traits(isIntegral, T)) {
+
+    // Maximum characters to read.
+    enum maxRead = T.sizeof*2;
+
+    static if (__traits(isUnsigned, T))
+        alias TT = ulong;
+    else
+        alias TT = long;
+
+    TT result;
+    size_t i = 0;
+    size_t rlen = nu_min(maxRead, source.length);
+    
+    // Get whether signed value is negative.
+    static if (!__traits(isUnsigned, T)) {
+        bool isNegative = source[i] == '-';
+        if (isNegative)
+            i++;
+    }
+
+    static if (base == 16) {
+
+        //
+        //                  HEXADECIMAL
+        //
+
+        // Skip '0x'
+        if (i+2 < rlen && source[i] == '0' && source[i] == 'x')
+            i += 2;
+
+        // Parse
+        ubyte b;
+        while(i < rlen) {
+            char c = source[i];
+
+            b = (c & 0xF) + (c >> 6) | ((c >> 3) & 0x8);
+            result = (result << 4) | b;
+            i++;
+        }
+
+    } else static if (base == 10) {
+
+        //
+        //                  DECIMAL
+        //
+        while(i < rlen) {
+            char c = source[i++];
+
+            if (c >= '0' && c <= '9') {
+                result *= 10;
+                result += c - '0';
+                
+                continue;
+            }
+            break;
+        }
+
+    } else static if (base == 8) {
+
+        // Skip '0o'
+        if (i+2 < rlen && source[i] == '0' && source[i] == 'o')
+            i += 2;
+
+        //
+        //                  OCTAL
+        //
+        size_t ix = 0;
+        while(i < rlen) {
+
+            char c = source[i++];
+            if (c >= '0' && c <= '7') {
+
+                result <<= 3;
+                result += (c - '0');
+                continue;
+            }
+            break;
+        }
+
+    } else static if (base == 2) {
+
+        // Skip '0x'
+        if (i+2 < rlen && source[i] == '0' && source[i] == 'b')
+            i += 2;
+
+        //
+        //                  BINARY
+        //
+        while(i < rlen) {
+            char c = source[i++];
+            if (c == '0' || c == '1') {
+
+                result <<= 1;
+                result |= c - '0';
+                continue;
+            }
+            break;
+        }
+
+    } else static assert(0, "Cannot parse base "~base.stringof~" numbers.");
+
+    // Set sign.
+    static if (!__traits(isUnsigned, T)) {
+        if (isNegative)
+            result = -result;
+    }
+    return cast(T)result;
+}
+
+/**
+    Parses an integer of the given base.
+
+    Params:
+        source =    The source string to parse.
+        base =      The base to parse.
+    
+    Returns:
+        The integer parsed from the source string if possible,
+        otherwise $(D 0).
+*/
+T parseInt(T, S)(auto ref S source, int base = 10) @nogc nothrow pure
+if (__traits(isIntegral, T)) {
+    switch(base) {
+        case 16:    return parseInt!(T, S, 16)(source);
+        case 10:    return parseInt!(T, S, 10)(source);
+        case 8:     return parseInt!(T, S, 8)(source);
+        case 2:     return parseInt!(T, S, 2)(source);
+        default: return T.init;
+    }
+}
 
 /**
     Converts the given string slice to an integral value.
@@ -32,195 +169,38 @@ import numem.core.exception;
     Returns:
         The integral value on success, or $(D 0) on failure.
 */
-T to_integral(T)(inout(char)[] str, int base = 10) @nogc nothrow if (__traits(isIntegral, T)) {
-    if (str.length == 0)
-        return T.init;
-    
-    auto tmp = _tmpbuffer!8(str);
-    ulong out_;
-    switch(base) {
-        case 8:
-            cast(void)sscanf(tmp.ptr, "%llo", &out_);
-            return cast(T)out_;
-
-        case 10:
-            static if (T.sizeof <= 4)
-                return cast(T)atoi(tmp.ptr);
-            else
-                return cast(T)atoll(tmp.ptr);
-
-        case 16:
-            cast(void)sscanf(tmp.ptr, "%8llx", &out_);
-            return cast(T)out_;
-
-        default:
-            return T.init;
-    }
-}
-
-/// ditto
-alias toInt = to_integral;
-
-/**
-    Converts the given string slice to an floating point value.
-
-    Params:
-        str = The string to convert.
-    
-    Returns:
-        The floating point value on success, or $(D 0.0) on failure.
-*/
-T to_floating(T)(inout(char)[] str) @nogc nothrow if (__traits(isFloating, T)) {
-    auto tmp = _tmpbuffer!32(str);
-    return cast(T)atof(tmp.ptr);
-}
-
-/// ditto
-alias toFloat = to_floating;
-
-/**
-    Converts the given value to a string.
-
-    Params:
-        value = The input value.
-
-    Returns:
-        A string parsed from $(D input).
-*/
-nstring to_string(T)(T value) @nogc {
-    static if (isStringable!T) {
-        
-        return nstring(assumeNoThrowNoGC((T value) { return input.toString(); }, value));
-    } static if (isPointer!T) {
-        
-        return to_string_impl("%p", value);
-    } else static if (__traits(isIntegral, T)) {
-        
-        static if (__traits(isUnsigned, T)) {
-            return to_string_impl("%llu", cast(ulong)value);
-        } else {
-            return to_string_impl("%lld", cast(long)value);
-        }
-    } else static if (__traits(isFloating, T)) {
-
-        return to_string_impl("%f", value);
-    } else {
-
-        return nstring(T.stringof);
-    }
-}
-
-/// ditto
-alias text = to_string;
-
-/**
-    Converts the given value to a hexidecimal string.
-
-    Params:
-        value = The input value.
-
-    Returns:
-        A string parsed from $(D input).
-*/
-nstring to_hex_string(T)(T value, bool lowercase = true) if (__traits(isIntegral, T)) {
-    nstring tmp = to_string_impl("%.*x", T.sizeof*2, value);
-
-    if (lowercase) {
-        foreach(ref char c; cast(char[])tmp[]) {
-            c = toLower(c);
-        }
-    }
-    return tmp;
-}
-
-/// ditto
-alias toHexString = to_hex_string;
-
-/**
-    Converts the given value to a octal string.
-
-    Params:
-        value = The input value.
-
-    Returns:
-        A string parsed from $(D input).
-*/
-nstring to_oct_string(T)(T value) if (__traits(isIntegral, T)) {
-    return to_string_impl("%.*o", T.sizeof*2, value); 
-}
-
-/// ditto
-alias toOctalString = to_oct_string;
-
-
-
-/**
-    Parses a hexidecimal number from the source.
-
-    Params:
-        source = The source string
-    
-    Returns:
-        The number parsed from the source string.
-*/
-T parseHex(T, S)(auto ref S source) @nogc nothrow
+T toInt(T)(inout(char)[] str, int base = 10) @nogc nothrow
 if (__traits(isIntegral, T)) {
-    enum maxRead = T.sizeof*2;
-    ulong result;
-    ubyte b;
-
-    foreach(i; 0..min(maxRead, source.length)) {
-        b = (source[i] & 0xF) + (source[i] >> 6) | ((source[i] >> 3) & 0x8);
-        result = (result << 4) | b;
-    }
-    return cast(T)result;
-}
-
-
-//
-//          IMPLEMENTATION DETAILS
-//
-
-private:
-
-// Tables that contain the various printf modifiers
-// used in string conversion.
-__gshared const(char)*[4][2] _NU_IFMT_TABLE = [
-    ["%hhu", "%hu", "%u", "%llu"], 
-    ["%hhi", "%hi", "%i", "%lli"]
-];
-
-__gshared const(char)*[4][2] _NU_IFMT_TABLE_HEX = [
-    ["%hhx", "%hx", "%x", "%llx"], 
-    ["%hhX", "%hX", "%X", "%llX"]
-];
-
-__gshared const(char)*[4] _NU_IFMT_TABLE_OCT = 
-    ["%hho", "%ho", "%o", "%llo"];
-
-nstring to_string_impl(T...)(const(char)* fmtstring, T input) @nogc {
-    int reqlen = snprintf(null, 0, fmtstring, input);
-
-    if (reqlen) {
-        size_t rlen = reqlen+1;
-
-        char* tmp = cast(char*)nu_malloc(rlen);
-        cast(void)snprintf(tmp, rlen, fmtstring, input);
-        
-        nstring out_ = nstring(tmp[0..rlen]);
-        nu_free(cast(void*)tmp);
-        return out_;
-    }
-
-    return nstring.init;
+    return parseInt(str, base);
 }
 
 /**
-    Creates a temporary buffer of the specified length.
+    Converts the given value to another type, if possible.
+
+    Various methods will be attempted to perform the conversion,
+    depending on the source and destination type.
+
+    Params:
+        value = The value to convert.
+
+    Returns:
+        The converted value, or $(D TTo)'s initial value on failure.
 */
-char[len] _tmpbuffer(uint len)(inout(char)[] str) return {
-    size_t tbOffset = min(8, str.length);
-    char[len] tmp = 0;
-    tmp[0..tbOffset] = str[0..tbOffset];
-    return tmp;
+Unqual!TTo to(TTo, TFrom)(T value) @nogc nothrow {
+    static if (is(typeof(TFrom.opCast!TTo))) {
+
+        // cast(TTo)value
+        return value.opCast!TTo();
+    } else static if (isSomeString!TTo && is(typeof(TFrom.toString))) {
+        
+        // value.toString()
+        return value.toString();
+    } else static if (__traits(isIntegral, TTo) && isSomeString!TFrom) {
+
+        // value.parseInt!TTo()
+        return parseInt!TTo(value);
+    } else {
+        debug static assert(0, "Can't convert "~TFrom.stringof~" to "~TTo.stringof~"!");
+        return typeof(return).init;
+    }
 }

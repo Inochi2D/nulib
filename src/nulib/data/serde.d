@@ -10,7 +10,7 @@
     License:   $(LINK2 http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0)
     Authors:   Luna Nielsen
 */
-module nulib.io.serialize;
+module nulib.data.serde;
 import nulib.string;
 import numem;
 

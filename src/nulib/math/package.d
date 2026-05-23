@@ -27,6 +27,7 @@
 module nulib.math;
 public import nulib.math.intrinsics;
 public import nulib.math.floating;
+public import numem.core.math;
 
 // Values obtained from Wolfram Alpha. 116 bits ought to be enough for anybody.
 // Wolfram Alpha LLC. 2011. Wolfram|Alpha. http://www.wolframalpha.com/input/?i=e+in+base+16 (access July 6, 2011).
@@ -201,4 +202,126 @@ bool signbit(T)(T x) @trusted @nogc nothrow pure if (__traits(isScalar, T)) {
 */
 T copysign(T)(T to, T from) @safe @nogc nothrow pure if (__traits(isScalar, T)) {
     return signbit(to) == signbit(from) ? to : -to;
+}
+
+
+/**
+    Raises the given number $(D x) by the power of $(D n).
+
+    Params:
+        x = The number to raise.
+        n = The power to raise it by.
+
+    Returns:
+        The number raised by the given power,
+        value is undefined if $(D x) is non-finite.      
+*/
+typeof(Unqual!(TX).init * Unqual!(TY).init) pow(TX, TY)(TX x, TY n) @nogc nothrow pure
+if (__traits(isScalar, TX) && __traits(isScalar, TY)) {
+    alias RT = typeof(return);
+
+    static if (__traits(isFloating, TX) && __traits(isIntegral, TY)) {
+
+        //
+        //                  POW(FLOAT, INT)
+        //
+        double p = 1.0;
+        double v = void;
+
+        ulong m = n;
+
+        if (n < 0) {
+
+            // pow(x, -1) invert.
+            if (n == -1)
+                return 1.0 / x;
+
+            // pow(x, -n)
+            m = cast(ulong)(0 - n);
+            v = p / x;
+        } else {
+
+            switch(n) {
+
+                // pow(x, 0)
+                case 0: return 1.0;
+
+                // pow(x, 1)
+                case 1: return x;
+
+                // pow(x, 2)
+                case 2: return x * x;
+
+                // pow(x, n)
+                default: break;
+            }
+
+            v = x;
+        }
+
+        while(true) {
+
+            if (m & 1)
+                p *= v;
+
+            // Shift one interation.
+            m >>= 1;
+            if (!m)
+                break;
+
+            v *= v;
+        }
+        return cast(RT)p;
+    } else static if (__traits(isIntegral, TX) && __traits(isIntegral, TY)) {
+        Unqual!TY m = n;
+
+        //
+        //                  POW(INT, INT)
+        //
+        static if (!__traits(isUnsigned, TX))
+            if (x == -1) return cast(RT)(m & 1 ? -1 : 1);
+
+        static if (!__traits(isUnsigned, TY))
+            if (x == 0 && m <= -1) return cast(RT) x / 0;
+    
+        if (x == 1)
+            return 1;
+
+        static if (!__traits(isUnsigned, TY))
+            if (m < 0)
+                return 0;
+
+        switch(m) {
+
+            // pow(x, 0)
+            case 0: return 1;
+            
+            // pow(x, 1)
+            case 1: return x;
+
+            // pow(x, 2)
+            case 2: return x * x;
+
+            // pow(x, n)
+            default:
+
+                RT p = 1;
+                RT v = x;
+                while(true) {
+
+                    if (m & 1)
+                        p *= v;
+
+                    // Shift one interation.
+                    m >>= 1;
+                    if (!m)
+                        break;
+
+                    v *= v;
+                }
+                return p;
+        }
+    } else {
+        static assert(0, "TODO: Implement pow(TX, float) fallback.");
+    }
 }

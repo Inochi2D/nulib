@@ -34,7 +34,7 @@ pragma(inline, true)
 T sqrt(T)(T x) if (__traits(isFloating, T)) {
     version(LDC) {
         return x < 0 ? T.nan : llvm_sqrt(x);
-    }  else version(GNU) {
+    } else version(GNU) {
         static if (is(T == float))
             return __builtin_sqrtf(x);
         else static if (is(T == double))
