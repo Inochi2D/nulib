@@ -11,6 +11,7 @@
 */
 module nulib.math.floating;
 import nulib.math.intrinsics;
+import numem.core.traits;
 
 @safe @nogc nothrow pure:
 

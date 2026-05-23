@@ -82,6 +82,7 @@ public:
     */
     @property T* back() @system nothrow { return empty ? null : &memory[$-1]; }
 
+    // Destructor
     ~this() {
 
         // This essentially frees the memory.
