@@ -728,3 +728,37 @@ if (isSomeChar!T) {
     
     return p - str;
 }
+
+/**
+    Gets the amount of digits for the given base representation
+    of an integer.
+
+    Params:
+        value = The value to check
+        base =  The base of the value.
+
+    Returns:
+        How many digits a string containing the given value would take.
+        $(D -1) if this is somehow impossible to compute.
+*/
+ptrdiff_t digits(T)(T value, uint base = 10) pure
+if (__traits(isIntegral, T)) {
+
+    // Impossible condition
+    if (base <= 1)
+        return -1;
+
+    size_t c = 0;
+    static if (!__traits(isUnsigned, T)) {
+        if (value < 0) {
+            value = -value;
+            c++;
+        }
+    }
+
+    do {
+        c++;
+        value /= base;
+    } while(value != 0);
+    return c;
+}
