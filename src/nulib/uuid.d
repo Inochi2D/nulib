@@ -285,24 +285,17 @@ public:
         Returns UUID string
     */
     nstring toString() {
-        import nulib.c.stdio : snprintf;
-
-        char[uuidStringLength+1] buffer;
-        snprintf(
-            cast(char*)buffer.ptr,
-            buffer.length,
-            "%0.8x-%0.4hx-%0.4hx-%0.4hx-%.2hhx%.2hhx%.2hhx%.2hhx%.2hhx%.2hhx", 
-            time_low, 
-            time_mid, 
-            time_hi_and_version,
-            clk_seq,
-            node[0],
-            node[1],
-            node[2],
-            node[3],
-            node[4],
-            node[5],
-        );
+        char[uuidStringLength+1] buffer = "00000000-0000-0000-0000-000000000000";
+        swritei(time_low,               buffer[0..8],   16, '0', false);
+        swritei(time_mid,               buffer[9..13],  16, '0', false);
+        swritei(time_hi_and_version,    buffer[14..18], 16, '0', false);
+        swritei(clk_seq,                buffer[19..23], 16, '0', false);
+        swritei(node[0],                buffer[24..26], 16, '0', false);
+        swritei(node[1],                buffer[26..28], 16, '0', false);
+        swritei(node[2],                buffer[28..30], 16, '0', false);
+        swritei(node[3],                buffer[30..32], 16, '0', false);
+        swritei(node[4],                buffer[32..34], 16, '0', false);
+        swritei(node[5],                buffer[34..36], 16, '0', false);
         
         nstring ret = nstring(cast(string)buffer[0..uuidStringLength]);
         return ret;
