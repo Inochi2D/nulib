@@ -29,9 +29,6 @@ import nulib.string;
 T parseInt(T, S, int base = 10)(auto ref S source) @nogc nothrow pure
 if (__traits(isIntegral, T)) {
 
-    // Maximum characters to read.
-    enum maxRead = T.sizeof*2;
-
     static if (__traits(isUnsigned, T))
         alias TT = ulong;
     else
@@ -39,7 +36,7 @@ if (__traits(isIntegral, T)) {
 
     TT result;
     size_t i = 0;
-    size_t rlen = nu_min(maxRead, source.length);
+    size_t rlen = source.length;
     
     // Get whether signed value is negative.
     static if (!__traits(isUnsigned, T)) {
@@ -54,18 +51,25 @@ if (__traits(isIntegral, T)) {
         //                  HEXADECIMAL
         //
 
-        // Skip '0x'
-        if (i+2 < rlen && source[i] == '0' && source[i] == 'x')
+        // Skip '#'
+        if (i+2 < rlen && source[i..i+2] == "0x") {
             i += 2;
+        } else if (i+1 < rlen && source[i] == '#') {
+            i += 1;
+        }
 
         // Parse
-        ubyte b;
         while(i < rlen) {
             char c = source[i];
 
-            b = (c & 0xF) + (c >> 6) | ((c >> 3) & 0x8);
-            result = (result << 4) | b;
-            i++;
+            // Ensure only 0-9 and A-F is allowed.
+            if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+                result <<= 4;
+                result += (c < 'A') ? (c & 0xF) : (c & 0x7) + 9;
+                i++;
+                continue;
+            }
+            break;
         }
 
     } else static if (base == 10) {
@@ -73,6 +77,7 @@ if (__traits(isIntegral, T)) {
         //
         //                  DECIMAL
         //
+
         while(i < rlen) {
             char c = source[i++];
 
@@ -88,7 +93,7 @@ if (__traits(isIntegral, T)) {
     } else static if (base == 8) {
 
         // Skip '0o'
-        if (i+2 < rlen && source[i] == '0' && source[i] == 'o')
+        if (i+2 < rlen && source[i..i+2] == "0o")
             i += 2;
 
         //
@@ -109,8 +114,8 @@ if (__traits(isIntegral, T)) {
 
     } else static if (base == 2) {
 
-        // Skip '0x'
-        if (i+2 < rlen && source[i] == '0' && source[i] == 'b')
+        // Skip '0b'
+        if (i+2 < rlen && source[i..i+2] == "0b")
             i += 2;
 
         //
@@ -159,6 +164,126 @@ if (__traits(isIntegral, T)) {
     }
 }
 
+@("parseInt")
+unittest {
+
+    // Without prefix.
+    assert(parseInt!int("FF", 16) == 0xFF);
+    assert(parseInt!int("24", 10) == 24);
+    assert(parseInt!int("224", 8) == 148);
+    assert(parseInt!int("11011", 2) == 0b11011);
+
+    // With prefix.
+    assert(parseInt!int("0xFF", 16) == 0xFF);
+    assert(parseInt!uint("0xAABBCCDD", 16) == 0xAABBCCDD);
+    assert(parseInt!uint("#AABBCCDD", 16) == 0xAABBCCDD);
+    assert(parseInt!int("0o224", 8) == 148);
+    assert(parseInt!int("0b11011", 2) == 0b11011);
+}
+
+/**
+    Writes the given integer to the given destination string.
+
+    Params:
+        source =        The souce integer.
+        destination =   The destination string slice to write to.
+        base =          The base of the value.
+        pad =           Character to use for padding, null for no padding.
+
+    Returns:
+        The amount of elements written, or
+        $(D -1) if the string could not be parsed.
+*/
+ptrdiff_t swritei(S, D, bool upper=true)(S source, inout(D)[] destination, int base = 10, D pad = '\0') @nogc nothrow
+if (__traits(isIntegral, S)) {
+    import nulib.string : digits;
+
+    static if (upper)
+        __gshared const D[] _HEX_TABLE = "0123456789ABCDEFGHIJKLMNOPQRSTUV";
+    else
+        __gshared const D[] _HEX_TABLE = "0123456789abcdefghijklmnopqrstuv";
+
+    ptrdiff_t wlen = nu_min(digits(source, base), destination.length);
+    D[] dst = cast(D[])destination;
+    S num = source;
+
+    ptrdiff_t   j = 0;      // write offset
+    ptrdiff_t   w = 0;      // written count
+    ptrdiff_t   i = 0;      // index
+
+    // Handle negative numbers.
+    static if (!__traits(isUnsigned, S)) {
+        if (num < 0) {
+
+            // Make positive.
+            num = -num;
+
+            // Skip one character forward and add minus symbol
+            dst[i] = '-';
+            j++;
+        }
+    }
+
+    // Add padding
+    if (pad != '\0') {
+        wlen = nu_min(digits(S.max, base)+j, destination.length);
+        dst[j..wlen] = pad;
+    }
+
+    // Move to back.
+    i = wlen;
+    if (base > 1 && base <= _HEX_TABLE.length) {
+
+        // Write the data.
+        do {
+
+            dst[--i] = _HEX_TABLE[num % base];
+            num = cast(S)(num / base);
+        } while(i > j && num > 0);
+        return wlen;
+    }
+    return -1;
+}
+
+/**
+    Writes the given integer to the given destination string.
+
+    Params:
+        source =        The souce integer.
+        destination =   The destination string slice to write to.
+        base =          The base of the value.
+        pad =           Character to use for padding, null for no padding.
+        upper =         Whether to write values in upper case
+
+    Returns:
+        The amount of elements written, or
+        $(D -1) if the string could not be parsed.
+*/
+ptrdiff_t swritei(S, D)(S source, inout(D)[] destination, int base, D pad = '\0', bool upper = true) @nogc nothrow {
+    if (upper)
+        return swritei!(S, D, true)(source, destination, base, pad);
+    else
+        return swritei!(S, D, false)(source, destination, base, pad);
+}
+
+@("swritei")
+unittest {
+    static string swriteTestFunc(T)(T value, int base) {
+        string buffer = new string(255);
+        ptrdiff_t w = swritei(value, buffer, base);
+        return buffer[0..w];
+    }
+
+    // Unsigned
+    assert(swriteTestFunc(ubyte(0xFF), 16) == "FF");
+    assert(swriteTestFunc(ubyte(24), 10) == "24");
+    assert(swriteTestFunc(ubyte(148), 8) == "224");
+    assert(swriteTestFunc(ubyte(0b11011), 2) == "11011");
+
+    // Signed
+    assert(swriteTestFunc(-0xFAFA, 16) == "-FAFA");
+}
+
 /**
     Converts the given string slice to an integral value.
 
@@ -171,7 +296,7 @@ if (__traits(isIntegral, T)) {
 */
 T toInt(T)(inout(char)[] str, int base = 10) @nogc nothrow
 if (__traits(isIntegral, T)) {
-    return parseInt(str, base);
+    return parseInt!T(str, base);
 }
 
 /**
