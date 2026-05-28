@@ -25,6 +25,7 @@
         HALF = &frac12;
 */
 module nulib.math;
+import nulib.math.fixed;
 public import nulib.math.intrinsics;
 public import nulib.math.floating;
 public import numem.core.math;
@@ -75,6 +76,22 @@ T min(T)(T lhs, T rhs) {
 */
 T max(T)(T lhs, T rhs) {
     return lhs > rhs ? lhs : rhs;
+}
+
+/**
+    Gets the absolute (positive) value for the given value.
+
+    Params:
+        value = the value to get the absolute value for.    
+
+    Returns:
+        The absolute value of the given value, if the value is not finite
+        the return value is undefined.
+*/
+pragma(inline, true)
+T abs(T)(T value) pure
+if (__traits(isScalar, T) || isFixed!T) {
+    return value < 0 ? -value : value;
 }
 
 /**
