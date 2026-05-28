@@ -14,18 +14,42 @@ importPaths "src/"
 sourcePaths "src/"
 
 // nulib:system
-subPackage "system" {
+subPackage {
+    name "system"
+    description "NuLib System submodule"
 
+    dependency "numem" version="*"
+    dependency "nulib" version="*"
+
+    targetType "staticLibrary"
+    sourceFiles "ext/nulib/system/**/*.d"
+    importPaths "ext/nulib/system/"
+}
+
+// nulib:io
+subPackage {
+    name "io"
+    description "NuLib IO submodule"
+
+    dependency "numem" version="*"
+    dependency "nulib" version="*"
+
+    targetType "staticLibrary"
+    sourceFiles "ext/nulib/io/**/*.d"
+    importPaths "ext/nulib/io/"
 }
 
 // nulib:threading
 subPackage {
     name "threading"
-    targetType "staticLibrary"
-    dependency "numem" version="*"
-
     description "Threading support for nulib"
-    sourceFiles "source/nulib/threading/**/*.d"
+
+    dependency "numem" version="*"
+    dependency "nulib" version="*"
+
+    targetType "staticLibrary"
+    sourceFiles "ext/nulib/threading/**/*.d"
+    importPaths "ext/nulib/threading/"
 }
 
 // Build configurations, static should be preferred.
