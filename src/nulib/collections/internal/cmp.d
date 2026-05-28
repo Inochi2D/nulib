@@ -29,20 +29,11 @@ bool nu_equals(LHS, RHS)(ref LHS lhs, ref RHS rhs) @nogc nothrow {
     //          in a nogc context.
     //          Otherwise, we try calling opEquals directly, if that fails we try
     //          the `is` operator, and finally if that fails we assert at compile-time.
-    static if (is(typeof(() @nogc { return T.init == T.init; }))) {
-        if (memory[i] == element) {
-            this.removeAt(i);
-            return;
-        }
-    } else static if (is(typeof(() @nogc { return T.init.opEquals(T.init); }))) {
-        if (memory[i].opEquals(element)) {
-            this.removeAt(i);
-            return;
-        }
-    } else static if (is(typeof(() @nogc { return T.init is T.init; }))) {
-        if (memory[i] is element) {
-            this.removeAt(i);
-            return;
-        }
+    static if (is(typeof(() @nogc { return LHS.init == RHS.init; }))) {
+        return lhs == rhs;
+    } else static if (is(typeof(() @nogc { return LHS.init.opEquals(RHS.init); }))) {
+        return lhs.opEquals(rhs);
+    } else static if (is(typeof(() @nogc { return LHS.init is RHS.init; }))) {
+        return lhs is rhs;
     } else static assert(0, LHS.stringof~".opEquals("~RHS.stringof~") is not @nogc!");
 }
