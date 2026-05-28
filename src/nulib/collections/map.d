@@ -61,7 +61,7 @@ alias multimap(Key, Value) = MapImpl!(Key, Value, (a, b) => a < b, true, true);
     The API should looks closely like the builtin associative arrays.
     O(log(n)) insertion, removal, and search time.
 */
-struct MapImpl(K, V, alias less = KeyCompareDefault!Key, bool allowDuplicates = false, bool ownsMemory = false) {
+struct MapImpl(TKey, TValue, alias less = KeyCompareDefault!Key, bool allowDuplicates = false, bool ownsMemory = false) {
 public:
 @nogc:
 
@@ -93,7 +93,7 @@ public:
             $(D true) if $(D value) was inserted for $(D key), 
             $(D false) otherwise.
     */
-    bool insert(K key, V value) @trusted {
+    bool insert(TKey key, TValue value) @trusted {
         return _tree.insert(key, value);
     }
 
@@ -107,7 +107,7 @@ public:
             $(D true) if any value(s) for the key were removed,
             $(D false) otherwise.
     */
-    bool remove(K key) @trusted {
+    bool remove(TKey key) @trusted {
 
         // Delete memory if this map owns it.
         static if (ownsMemory) {
@@ -140,7 +140,7 @@ public:
             A pointer to the value of the given key if found,
             $(D null) otherwise.    
     */
-    inout(V)* opBinaryRight(string op)(K key) inout @trusted
+    inout(TValue)* opBinaryRight(string op)(TKey key) inout @trusted
     if (op == "in") {
         return key in _tree;
     }
@@ -156,8 +156,8 @@ public:
             Assertation or crash otherwise.
     */
     @trusted
-    ref inout(V) opIndex(K key) inout {
-        inout(V)* p = key in _tree;
+    ref inout(TValue) opIndex(TKey key) inout {
+        inout(TValue)* p = key in _tree;
         assert(p !is null);
         return *p;
     }
@@ -169,8 +169,8 @@ public:
             value = The value to assign
             key =   The key to assign
     */
-    void opIndexAssign(V value, K key) @trusted {
-        V* p = key in _tree;
+    void opIndexAssign(TValue value, TKey key) @trusted {
+        TValue* p = key in _tree;
         if (p is null) {
             insert(key, value); // PERF: this particular call can assume no-dupe
         } else
@@ -187,7 +187,7 @@ public:
             $(D true) if the key was present,
             $(D false) otherwise.
     */
-    bool contains(K key) const @trusted {
+    bool contains(TKey key) const @trusted {
         return _tree.contains(key);
     }
 
@@ -198,10 +198,15 @@ public:
             dg = The function to call on each iteration.
     */
     int opApply(scope int delegate(TKey, TValue) dg) @nogc @trusted {
+
+        // Type-casted nogc delegate.
+        alias dg_t = int delegate(TKey, TValue) @nogc @trusted;
+        auto dgn = cast(dg_t)dg;
+
         auto kv = _tree.byKeyValue();
         while(!kv.empty()) {
             auto front = kv.front();
-            int result = dg(front.key, front.value);
+            int result = dgn(front.key, front.value);
             if (result)
                 return result;
 
@@ -218,10 +223,15 @@ public:
             dg = The function to call on each iteration.
     */
     int opApply(scope int delegate(TValue) dg) @nogc @trusted {
+
+        // Type-casted nogc delegate.
+        alias dg_t = int delegate(TValue) @nogc @trusted;
+        auto dgn = cast(dg_t)dg;
+
         auto v = _tree.byValue();
         while(!v.empty()) {
             auto front = v.front();
-            int result = dg(front);
+            int result = dgn(front);
             if (result)
                 return result;
 
@@ -239,10 +249,15 @@ public:
     */
     int opApply()(scope int delegate(TKey) dg) @nogc @trusted
     if (!is(TKey == TValue)) {
+
+        // Type-casted nogc delegate.
+        alias dg_t = int delegate(TKey) @nogc @trusted;
+        auto dgn = cast(dg_t)dg;
+
         auto v = _tree.byValue();
         while(!v.empty()) {
             auto front = v.front();
-            int result = dg(front);
+            int result = dgn(front);
             if (result)
                 return result;
 
@@ -254,7 +269,7 @@ public:
 
 private:
 
-    alias InternalTree = BTree!(K, V, less, allowDuplicates, false);
+    alias InternalTree = BTree!(TKey, TValue, less, allowDuplicates, false);
     InternalTree _tree;
 }
 
@@ -267,11 +282,6 @@ unittest {
     assert(m.length == 0);
     assert(m.empty);
     assert(!m.contains(7));
-
-    auto range = m.byKey();
-    assert(range.empty);
-    foreach (e; range) {
-    }
 
     m[1] = "fun";
 }

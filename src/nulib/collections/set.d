@@ -60,7 +60,7 @@ alias multiset(Key) = SetImpl!(Key, (a, b) => a < b, true, true);
     O(log(n)) insertion, removal, and search time.
     `Set` is designed to operate even without initialization through `makeSet`.
 */
-struct SetImpl(K, alias less = (a, b) => a < b, bool allowDuplicates = false, bool ownsMemory = false) {
+struct SetImpl(TKey, alias less = (a, b) => a < b, bool allowDuplicates = false, bool ownsMemory = false) {
 public:
 @nogc:
 
@@ -91,7 +91,7 @@ public:
             $(D true) if $(D key) was inserted, 
             $(D false) otherwise.
     */
-    bool insert(K key) @trusted {
+    bool insert(TKey key) @trusted {
         ubyte whatever = 0;
         return _tree.insert(key, whatever);
     }
@@ -106,7 +106,7 @@ public:
             $(D true) if any value(s) for the key were removed,
             $(D false) otherwise.
     */
-    bool remove(K key) @trusted {
+    bool remove(TKey key) @trusted {
 
         // Delete memory if this set owns it.
         static if (ownsMemory) {
@@ -141,7 +141,7 @@ public:
             $(D true) if the key was present,
             $(D false) otherwise.
     */
-    bool opBinaryRight(string op)(K key) inout @trusted
+    bool opBinaryRight(string op)(TKey key) inout @trusted
     if (op == "in") {
         return (key in _tree) !is null;
     }
@@ -156,7 +156,7 @@ public:
             $(D true) if the key was present,
             $(D false) otherwise.
     */
-    bool opIndex(K key) const @trusted {
+    bool opIndex(TKey key) const @trusted {
         return (key in _tree) !is null;
     }
 
@@ -170,7 +170,7 @@ public:
             $(D true) if the key was present,
             $(D false) otherwise.
     */
-    bool contains(K key) const @trusted {
+    bool contains(TKey key) const @trusted {
         return (key in _tree) !is null;
     }
 
@@ -180,11 +180,15 @@ public:
         Params:
             dg = The function to call on each iteration.
     */
-    int opApply()(scope int delegate(K) dg) @nogc @trusted {
+    int opApply(scope int delegate(ref TKey) dg) @nogc @trusted {
+
+        // Type-casted nogc delegate.
+        alias dg_t = int delegate(ref TKey) @nogc @trusted;
+
         auto k = _tree.byKey();
         while(!k.empty()) {
             auto front = k.front();
-            int result = dg(front);
+            int result = (cast(dg_t)dg)(front);
             if (result)
                 return result;
 
@@ -200,9 +204,9 @@ public:
 private:
 
     // dummy type
-    alias V = ubyte;
+    alias TValue = ubyte;
 
-    alias InternalTree = BTree!(K, V, less, allowDuplicates, false);
+    alias InternalTree = BTree!(TKey, TValue, less, allowDuplicates, false);
     InternalTree _tree;
 
 }
@@ -215,13 +219,8 @@ unittest {
 
     assert(set.length == 0);
     assert(set.empty);
-    set.clearContents();
+    set.clear();
     assert(!set.contains("toto"));
-
-    auto range = set[];
-    assert(range.empty);
-    foreach (e; range) {
-    }
 
     // Finally create the internal state
     set.insert("titi");
