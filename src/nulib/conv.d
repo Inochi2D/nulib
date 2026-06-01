@@ -10,6 +10,7 @@
 */
 module nulib.conv;
 import numem.core.math;
+import numem.core.traits;
 import nulib.string;
 
 // TODO:    This entire module should be rewritten into pure D.
@@ -311,7 +312,7 @@ if (__traits(isIntegral, T)) {
     Returns:
         The converted value, or $(D TTo)'s initial value on failure.
 */
-Unqual!TTo to(TTo, TFrom)(T value) @nogc nothrow {
+Unqual!TTo to(TTo, TFrom)(TFrom value) @nogc nothrow {
     static if (is(typeof(TFrom.opCast!TTo))) {
 
         // cast(TTo)value
