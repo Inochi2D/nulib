@@ -336,13 +336,14 @@ StringImpl!(fchar_t) toSupportedEncoding(string str) @nogc {
     }
 }
 
+import core.stdc.stdio;
+import core.stdc.string;
+import core.stdc.errno;
 
-version (CRuntime_Microsoft) 
-    alias _fopen = _wfopen;
-else
-    alias _fopen = fopen;
-
-version (CRuntime_Microsoft)
+version (CRuntime_Microsoft) {
     alias fchar_t = wchar;
-else
+    alias _fopen = _wfopen;
+} else {
     alias fchar_t = char;
+    alias _fopen = fopen;
+}
