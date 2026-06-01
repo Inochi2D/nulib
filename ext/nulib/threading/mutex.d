@@ -9,7 +9,6 @@
     Authors:   Luna Nielsen
 */
 module nulib.threading.mutex;
-import nulib.threading.internal.mutex;
 import numem;
 
 /**

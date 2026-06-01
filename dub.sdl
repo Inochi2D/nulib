@@ -22,8 +22,18 @@ subPackage {
     dependency "nulib" version="*"
 
     targetType "staticLibrary"
+    sourcePaths 
     sourceFiles "ext/nulib/system/**/*.d"
     importPaths "ext/nulib/system/"
+    
+    configuration "library" {
+        targetType "staticLibrary"
+    }
+
+    configuration "unittest" {
+        targetType "autodetect"
+        dependency "nusilly" version="~>1.0"
+    }
 }
 
 // nulib:io
@@ -35,8 +45,18 @@ subPackage {
     dependency "nulib" version="*"
 
     targetType "staticLibrary"
+    sourcePaths 
     sourceFiles "ext/nulib/io/**/*.d"
     importPaths "ext/nulib/io/"
+    
+    configuration "library" {
+        targetType "staticLibrary"
+    }
+
+    configuration "unittest" {
+        targetType "autodetect"
+        dependency "nusilly" version="~>1.0"
+    }
 }
 
 // nulib:threading
@@ -48,8 +68,18 @@ subPackage {
     dependency "nulib" version="*"
 
     targetType "staticLibrary"
-    sourceFiles "ext/nulib/threading/**/*.d"
+    sourcePaths 
+    sourceFiles "ext/nulib/threading/*.d"
     importPaths "ext/nulib/threading/"
+
+    configuration "library" {
+        targetType "staticLibrary"
+    }
+
+    configuration "unittest" {
+        targetType "autodetect"
+        dependency "nusilly" version="~>1.0"
+    }
 }
 
 // Build configurations, static should be preferred.
@@ -60,5 +90,5 @@ configuration "library" {
 
 configuration "unittest" {
     targetType "autodetect"
-    dependency "silly" version="~>1.1.1"
+    dependency "nusilly" version="~>1.0"
 }

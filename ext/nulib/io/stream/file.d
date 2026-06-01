@@ -1,8 +1,5 @@
 module nulib.io.stream.file;
 import nulib.io.stream;
-import nulib.c.stdio;
-import nulib.c.string;
-import nulib.c.errno;
 import nulib.math : min;
 import nulib.string;
 import numem;

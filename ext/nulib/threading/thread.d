@@ -9,27 +9,35 @@
     Authors:   Luna Nielsen
 */
 module nulib.threading.thread;
-import it = nulib.threading.internal.thread;
 import numem;
 
 /**
     Thread ID
 */
-alias ThreadId = it.ThreadId;
+alias ThreadId = ptrdiff_t;
+
+/**
+    A thread context.
+*/
+struct ThreadContext {
+    void* userData;
+    void function(void* userData) callback;
+    Exception ex;
+}
 
 /**
     A thread of execution.
 */
 class Thread : NuObject {
 private:
-    it.NativeThread thread_;
+    NativeThread thread_;
 
 protected:
 
     /**
         The native implementation defined handle of the thread.
     */
-    final @property it.NativeThread nativeHandle() => thread_;
+    final @property NativeThread nativeHandle() => thread_;
     
     /**
         Virtual function which may be overridden.
@@ -41,18 +49,19 @@ protected:
         virtual function.
     */
     this() @nogc {
-        it.ThreadContext context_;
+        ThreadContext context_;
         context_.userData = cast(void*)this;
         context_.callback = (void* ctx) { (cast(Thread)ctx).onExecute(); };
-        this.thread_ = it.NativeThread.create(context_);
+        this.thread_ = NativeThread.create(context_);
     }
 
 public:
 
     /**
-        The Thread ID of the calling thread.
+        Gets the ID of the calling thread.
     */
-    static @property ThreadId selfTid() @safe => it.NativeThread.selfTid();
+    pragma(mangle, "_nu_thread_self_tid")
+    static @property ThreadId selfTid() @safe;
 
     /**
         The thread Id of the given thread.
@@ -68,30 +77,30 @@ public:
         Creates a new thread.
     */
     this(void delegate() callback) @nogc @trusted {
-        it.ThreadContext context_;
+        ThreadContext context_;
         context_.userData = callback.ptr;
         context_.callback = cast(void function(void* ptr) @nogc)callback.funcptr;
-        this.thread_ = it.NativeThread.create(context_);
+        this.thread_ = NativeThread.create(context_);
     }
 
     /**
         Creates a new thread.
     */
     this(void function() callback) @nogc @trusted {
-        it.ThreadContext context_;
+        ThreadContext context_;
         context_.userData = cast(void*)this;
         context_.callback = cast(void function(void* ptr) @nogc)callback;
-        this.thread_ = it.NativeThread.create(context_);
+        this.thread_ = NativeThread.create(context_);
     }
 
     /**
         Creates a new thread.
     */
     this(T)(void function(T) callback, T data) @nogc @trusted {
-        it.ThreadContext context_;
+        ThreadContext context_;
         context_.userData = cast(void*)data;
         context_.callback = cast(void function(void* ptr) @nogc)callback;
-        this.thread_ = it.NativeThread.create(context_);
+        this.thread_ = NativeThread.create(context_);
     }
 
     /**
@@ -101,9 +110,8 @@ public:
         Params:
             ms = Miliseconds that the thread should sleep.
     */
-    static void sleep(uint ms) @nogc @safe {
-        it.NativeThread.sleep(ms);
-    }
+    pragma(mangle, "_nu_thread_sleep")
+    extern(C) static void sleep(uint ms) @nogc @safe;
 
     /**
         Starts executing the thread.
@@ -150,6 +158,61 @@ public:
             return thread_.join(timeout, rethrow);
         return false;
     }
+}
+
+/**
+    Base class of native threading implementations.
+*/
+extern
+abstract
+class NativeThread : NuObject {
+public:
+@nogc:
+    
+    /**
+        Creates a native thread for the given platform.
+
+        Params:
+            ctx = The thread context.
+
+        Returns:
+            A new $(D NativeThread) on success, $(D null)
+            if thread aren't supported on the platform.    
+    */
+    pragma(mangle, "_nu_native_thread_create")
+    extern(C) static NativeThread create(ThreadContext ctx);
+
+    /**
+        ID of the thread.    
+    */
+    abstract @property ThreadId tid() @safe;
+
+    /**
+        Whether the thread is currently running.
+    */
+    abstract @property bool isRunning() @safe;
+
+    /**
+        Starts the given thread.
+    */
+    abstract void start() @safe;
+
+    /**
+        Forcefully cancels the thread, stopping execution.
+
+        This is not a safe operation, as it may lead to memory
+        leaks and corrupt state. Only use when ABSOLUTELY neccesary.
+    */
+    abstract void cancel() @system;
+
+    /**
+        Waits for the thread to finish execution.
+    
+        Params:
+            timeout = How long to wait for the thread to exit.
+            rethrow = Whether execptions thrown in the thread should be rethrown.
+    */
+    abstract bool join(uint timeout, bool rethrow) @safe;
 }
 
 @("start & join")
