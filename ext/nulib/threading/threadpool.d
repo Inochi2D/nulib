@@ -9,15 +9,6 @@
     Authors:   Luna Nielsen
 */
 module nulib.threading.threadpool;
-import nulib.threading.internal.thread;
 import nulib.threading.thread;
 import nulib.threading.mutex;
 import numem;
-
-/**
-    Gets the total number of CPUs in the system.
-
-    Returns:
-        The number of CPUs in the system.
-*/
-alias totalCPUs = nulib.threading.internal.thread.totalCPUs;

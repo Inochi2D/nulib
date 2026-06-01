@@ -9,7 +9,6 @@
     Authors:   Luna Nielsen
 */
 module nulib.threading.semaphore;
-import nulib.threading.internal.semaphore;
 import numem;
 
 /**
@@ -77,6 +76,61 @@ public:
     bool tryAwait() {
         return semaphore_.tryAwait();
     }
+}
+
+/**
+    Native implementation of a semaphore.
+*/
+extern
+abstract
+class NativeSemaphore : NuObject {
+public:
+@nogc:
+    
+    /**
+        Creates a native semaphore for the given platform.
+
+        Params:
+            count = The initial counter value for the semaphore.
+
+        Returns:
+            A new $(D NativeSemaphore) on success, $(D null)
+            if semaphores aren't supported on the platform.    
+    */
+    pragma(mangle, "_nu_native_semaphore_create")
+    extern(C) static NativeSemaphore create(uint count);
+
+    /**
+        Signals the semaphore.
+
+        Note:
+            Control is not transferred to the waiter.
+    */
+    abstract void signal();
+
+    /**
+        Suspends the thread until the semaphore is signaled,
+        or the timeout is reached.
+
+        Params:
+            timeout =   Timeout in miliseconds to block the 
+                        calling thread before giving up.
+
+        Returns:
+            $(D true) if the semaphore was signaled in time,
+            $(D false) otherwise.
+    */
+    abstract bool await(ulong timeout = 0);
+
+    /**
+        Checks if the semaphore is signalled then
+        awaits on it if is.
+
+        Returns:
+            $(D true) if the semaphore was signalled,
+            $(D false) otherwise.
+    */
+    abstract bool tryAwait();
 }
 
 @("signal and await")

@@ -9,7 +9,6 @@
     Authors:   Luna Nielsen
 */
 module nulib.threading.process;
-import nulib.threading.internal.process;
 import numem;
 
 /**
@@ -25,7 +24,7 @@ public:
     /**
         The current running process.
     */
-    static @property Process thisProcess() @safe {
+    static @property Process thisProcess() @trusted {
         if (auto proc = NativeProcess.thisProcess)
             return nogc_new!Process(proc);
         
@@ -63,6 +62,40 @@ public:
     bool kill() @safe {
         return process_.kill();
     }
+}
+
+/**
+    A process.
+*/
+extern
+abstract
+class NativeProcess : NuObject {
+public:
+@nogc:
+    
+    /**
+        Creates a native mutex for the given platform.
+
+        Returns:
+            A new $(D NativeMutex) on success, $(D null)
+            if mutexes aren't supported on the platform.    
+    */
+    pragma(mangle, "_nu_native_process_this")
+    extern(C) static NativeProcess thisProcess();
+
+    /**
+        The ID of the process.
+    */
+    abstract @property uint pid() @safe;
+
+    /**
+        Kills the given process.
+
+        Returns:
+            $(D true) if the operation succeeded,
+            $(D false) otherwise.
+    */
+    abstract bool kill() @safe;
 }
 
 @("thisProcess")
