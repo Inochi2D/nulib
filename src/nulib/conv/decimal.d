@@ -9,8 +9,7 @@
     License:   $(LINK2 http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0)
     Authors:
         Luna Nielsen
-        Nigel Tao
-        Ken Thompson
+        Ken Thompson (fast left-shift)
 
     See_Also:
         [ParseNumberF64](https://nigeltao.github.io/blog/2020/parse-number-f64-simple.html)
