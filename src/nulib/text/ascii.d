@@ -10,7 +10,7 @@
 */
 module nulib.text.ascii;
 
-@nogc nothrow:
+@nogc nothrow pure:
 
 /**
     Gets whether the character is ascii
