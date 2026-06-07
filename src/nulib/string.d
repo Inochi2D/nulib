@@ -762,3 +762,57 @@ if (__traits(isIntegral, T)) {
     } while(value != 0);
     return c;
 }
+
+/**
+    Gets whether the given string starts with the given prefix.
+
+    Params:
+        str =       The string to check
+        prefix =    The prefix to check.
+
+    Returns:
+        $(D true) if the given string starts with the given prefix,
+        $(D false) otherwise.
+*/
+bool startsWith(T)(auto ref inout(T) str, auto ref inout(T) prefix) pure
+if (isSomeSafeString!T) {
+
+    // Can't have that prefix, too short.
+    if (str.length < prefix.length)
+        return false;
+
+    return str[0..prefix.length] == prefix[];
+}
+
+@("startsWith")
+unittest {
+    assert("Hello, world!".startsWith("Hello"));
+    assert("こんいちは".startsWith("こん"));
+}
+
+/**
+    Gets whether the given string ends with the given suffix.
+
+    Params:
+        str =       The string to check
+        suffix =    The prefix to check.
+
+    Returns:
+        $(D true) if the given string starts with the given suffix,
+        $(D false) otherwise.
+*/
+bool endsWith(T)(auto ref inout(T) str, auto ref inout(T) suffix) pure
+if (isSomeSafeString!T) {
+
+    // Can't have that prefix, too short.
+    if (str.length < suffix.length)
+        return false;
+
+    return str[$-suffix.length..$] == suffix[];
+}
+
+@("endsWith")
+unittest {
+    assert("Hello, world!".endsWith("world!"));
+    assert("こんいちは".endsWith("ちは"));
+}
