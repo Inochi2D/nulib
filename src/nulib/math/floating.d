@@ -16,6 +16,18 @@ import numem.core.traits;
 @safe @nogc nothrow pure:
 
 /**
+    Gets information about a floating point type.    
+*/
+template FloatInfo(FT) 
+if (__traits(isFloating, FT)) {
+    import std.math.exponential : log2;
+
+    enum uint MantissaBits = cast(uint)(FT.mant_dig-1);
+    enum uint ExponentBits = cast(uint)(log2(cast(float)FT.max_exp)+1);
+    enum int Bias = cast(int)(-(FT.max_exp-1));
+}
+
+/**
     Determines whether the given value is NaN (Not a Number)
 
     Params:
@@ -270,6 +282,68 @@ T atan2(T)(T y, T x) @safe pure nothrow @nogc {
     return z;
 }
 
+/**
+    Decomposes the given number into a normalized fraction
+    and an integral exponent.
+
+    Params:
+        value = The number to decompose.
+        exp =   The variable to store the exponent in.
+
+    Returns:
+        The normalized fraction.
+*/
+T frexp(T)(T value, ref int exp) @nogc nothrow pure 
+if (__traits(isFloating, T)) {
+    enum ft_expmask = (1LU<<FloatInfo!(T).ExponentBits)-1;
+    enum ft_mantmask = (1LU<<FloatInfo!(T).MantissaBits)-1;
+    
+    // Get binary representation as 64-bit.
+    T realMantissa = 1.0;
+    static if (T.sizeof < ulong.sizeof) {
+        FtoI!T tmp = *cast(FtoI!(T)*)&value;
+        ulong bits = cast(ulong)tmp;
+    } else {
+        ulong bits = *cast(ulong*)&value;
+    }
+
+    // Test for invalid states.
+    if (value == 0 || isNaN(value) || isInfinity(value)) {
+        exp = 0;
+        return value;
+    }
+
+
+    bool isNegative = value < 0;
+    int exponent = cast(int)((bits >> T.mant_dig-1) & ft_expmask);
+    ulong mantissa = bits & ft_mantmask;
+
+    // Handle exponent.
+    if (exponent == 0) exponent++;
+    else mantissa |= (1LU<<T.mant_dig-1);
+
+    // Bias the exponent by T.max_exp + T.mant_dig
+    exponent -= (T.max_exp + T.mant_dig) - 2;
+    realMantissa = mantissa;
+
+    // Normalize
+    while(realMantissa >= 1.0) {
+        mantissa >>= 1;
+        realMantissa /= 2.0;
+        exponent++;
+    }
+
+    // Apply sign
+    if (isNegative)
+        realMantissa *= -1;
+
+    exp = exponent;
+    return realMantissa;
+}
+
+//
+//              IMPLEMENTATION DETAILS
+//
 private:
 T poly(T)(T x, T[] y) @safe @nogc nothrow pure {
     ptrdiff_t i = y.length - 1;

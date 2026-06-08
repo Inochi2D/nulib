@@ -32,6 +32,8 @@ module nulib.conv.floating;
 import nulib.conv.algorithms.common;
 import nulib.conv.algorithms.eisel_lemire;
 import nulib.conv.algorithms.sdc;
+import nulib.string;
+import nulib.math;
 import numem.core.math;
 
 
@@ -103,6 +105,31 @@ unittest {
         double r = parseFloat!double(ft.text);
         assert(fabs(r - ft) < 0.00001, r.text~" != "~ft.text);
     }
+}
+
+/**
+    Gets the string representation of a given floating point
+    number.
+
+    Params:
+        source =    The source number.
+
+    Returns:
+        A string representing the number.
+*/
+nstring toString(S)(S source) @nogc nothrow
+if (__traits(isFloating, S)) {
+    bool isNegative = signbit(source);
+
+    // Handle special cases.
+    if (isNaN(source)) {
+        return nstring("+nan");
+    } else if (isInfinity(source)) {
+        return isNegative ? nstring("+inf") : nstring("-inf");
+    }
+    
+    assert(0, "TODO");
+    return nstring.init;
 }
 
 

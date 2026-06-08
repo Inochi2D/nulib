@@ -14,6 +14,7 @@ import numem.core.traits;
 import nulib.string;
 
 public import nulib.conv.integral;
+public import nulib.conv.floating;
 
 // TODO:    This entire module should be rewritten into pure D.
 //          Relying on the C standard library here is probably
@@ -46,6 +47,18 @@ Unqual!TTo to(TTo, TFrom)(TFrom value) @nogc nothrow {
 
         // value.parseInt!TTo()
         return parseInt!TTo(value);
+    } else static if (__traits(isFloating, TTo) && isSomeString!TFrom) {
+
+        // value.parseFloat!TTo()
+        return parseFloat!TTo(value);
+    } else static if (__traits(isIntegral, TFrom) && isSomeString!TTo) {
+
+        // toString(value
+        return toString(value);
+    } else static if (__traits(isFloating, TFrom) && isSomeString!TTo) {
+
+        // toString(value
+        return toString(value);
     } else {
         debug static assert(0, "Can't convert "~TFrom.stringof~" to "~TTo.stringof~"!");
         return typeof(return).init;

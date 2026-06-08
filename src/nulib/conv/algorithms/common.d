@@ -247,18 +247,6 @@ if (isSomeString!S) {
 //
 
 /**
-    Gets information about a floating point type.    
-*/
-template FloatInfo(FT) 
-if (__traits(isFloating, FT)) {
-    import std.math.exponential : log2;
-
-    enum uint MantissaBits = cast(uint)(FT.mant_dig-1);
-    enum uint ExponentBits = cast(uint)(log2(cast(float)FT.max_exp)+1);
-    enum int Bias = cast(int)(-(FT.max_exp-1));
-}
-
-/**
     Struct representing the parsed elements
     of a floating point number.
 */

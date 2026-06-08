@@ -24,7 +24,7 @@ subPackage {
     targetType "staticLibrary"
     sourcePaths 
     sourceFiles "ext/nulib/system/**/*.d"
-    importPaths "ext/nulib/system/"
+    importPaths "ext/"
     
     configuration "library" {
         targetType "staticLibrary"
@@ -47,7 +47,7 @@ subPackage {
     targetType "staticLibrary"
     sourcePaths 
     sourceFiles "ext/nulib/io/**/*.d"
-    importPaths "ext/nulib/io/"
+    importPaths "ext/"
     
     configuration "library" {
         targetType "staticLibrary"
@@ -70,7 +70,7 @@ subPackage {
     targetType "staticLibrary"
     sourcePaths 
     sourceFiles "ext/nulib/threading/*.d"
-    importPaths "ext/nulib/threading/"
+    importPaths "ext/"
 
     configuration "library" {
         targetType "staticLibrary"

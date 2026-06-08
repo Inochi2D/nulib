@@ -22,7 +22,7 @@
 */
 module nulib.conv.algorithms.sdc;
 import nulib.conv.algorithms.common;
-import nulib.conv.integral;
+import nulib.math.floating;
 import nulib.text.ascii;
 import numem.core.math;
 
