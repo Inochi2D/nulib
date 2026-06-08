@@ -784,10 +784,27 @@ if (isSomeSafeString!T) {
     return str[0..prefix.length] == prefix[];
 }
 
+/**
+    Gets whether the given string starts with the given prefix.
+
+    Params:
+        str =       The string to check
+        prefix =    The prefix to check.
+
+    Returns:
+        $(D true) if the given string starts with the given prefix,
+        $(D false) otherwise.
+*/
+bool startsWith(T, C)(auto ref inout(T) str, auto ref inout(C) prefix) pure
+if (isSomeSafeString!T && isSomeChar!C) {
+    return str.length > 0 ? str[0] == prefix : false;
+}
+
 @("startsWith")
 unittest {
     assert("Hello, world!".startsWith("Hello"));
     assert("こんいちは".startsWith("こん"));
+    assert("こんいちは"w.startsWith('こ'));
 }
 
 /**
@@ -811,8 +828,78 @@ if (isSomeSafeString!T) {
     return str[$-suffix.length..$] == suffix[];
 }
 
+/**
+    Gets whether the given string ends with the given suffix.
+
+    Params:
+        str =       The string to check
+        suffix =    The prefix to check.
+
+    Returns:
+        $(D true) if the given string starts with the given suffix,
+        $(D false) otherwise.
+*/
+bool endsWith(T, C)(auto ref inout(T) str, auto ref inout(C) suffix) pure
+if (isSomeSafeString!T && isSomeChar!C) {
+    return str.length > 0 ? str[$-1] == suffix : false;
+}
+
 @("endsWith")
 unittest {
     assert("Hello, world!".endsWith("world!"));
     assert("こんいちは".endsWith("ちは"));
+    assert("こんいちは"w.endsWith('は'));
+}
+
+/**
+    Gets whether the given string contains a given substring.
+
+    Params:
+        str =       The string to check
+        substr =    The substring to check.
+
+    Returns:
+        $(D true) if the given string contains the given substring,
+        $(D false) otherwise.
+*/
+bool contains(T)(auto ref inout(T) str, auto ref inout(T) substr) pure
+if (isSomeSafeString!T) {
+
+    // Can't have that prefix, too short.
+    if (str.length < substr.length)
+        return false;
+
+    // Check every combination.
+    foreach(i; 0..str.length-substr.length) {
+        if (str[i..i+substr.length] == substr[])
+            return true;
+    }
+    return false;
+}
+
+/**
+    Gets whether the given string contains a given character.
+
+    Params:
+        str =   The string to check
+        c =     The character to look for.
+
+    Returns:
+        $(D true) if the given string contains the given character,
+        $(D false) otherwise.
+*/
+bool contains(T, C)(auto ref inout(T) str, auto ref inout(C) c) pure
+if (isSomeSafeString!T && isSomeChar!C) {
+    foreach(sc; str) {
+        if (sc == c)
+            return true;
+    }
+    return false;
+}
+
+@("contains")
+unittest {
+    assert("Hello, world!".contains("llo, wo"));
+    assert("こんいちは".contains("いち"));
+    assert("こんいちは"w.contains('い'));
 }
