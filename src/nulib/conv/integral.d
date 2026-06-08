@@ -94,7 +94,6 @@ unittest {
 */
 ptrdiff_t swritei(S, D, bool upper=true)(S source, inout(D)[] destination, int base = 10, D pad = '\0') @nogc nothrow
 if (__traits(isIntegral, S)) {
-    import nulib.string : digits;
 
     static if (upper)
         __gshared const D[] _HEX_TABLE = "0123456789ABCDEFGHIJKLMNOPQRSTUV";
@@ -180,6 +179,31 @@ unittest {
 
     // Signed
     assert(swriteTestFunc(-0xFAFA, 16) == "-FAFA");
+}
+
+/**
+    Gets a string from the given integer.
+
+    Params:
+        source =    The source integer.
+        base =      The base to encode the integer as.
+
+    Returns:
+        A string representing the integer.
+*/
+nstring toString(S)(S source, int base = 10) @nogc nothrow
+if (__traits(isIntegral, S)) {
+    nstring buf;
+    buf.resize(cast(uint)digits(S.max, base)+1);
+    ptrdiff_t w = swritei(source, buf.value, base);
+    buf.resize(w);
+    return buf;
+}
+
+@("toString")
+unittest {
+    assert(24.toString(10) == "24");
+    assert(0xFAFA.toString(16) == "FAFA");
 }
 
 /**
