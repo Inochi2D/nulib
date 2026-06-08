@@ -13,130 +13,7 @@ import numem.core.math;
 import numem.core.traits;
 import nulib.string;
 
-/**
-    Parses an integer of the given base.
-
-    Params:
-        source = The source string to parse.
-    
-    Returns:
-        The integer parsed from the source string.
-*/
-T parseInt(T, S, int base = 10)(auto ref S source) @nogc nothrow pure
-if (__traits(isIntegral, T)) {
-
-    static if (__traits(isUnsigned, T))
-        alias TT = ulong;
-    else
-        alias TT = long;
-
-    TT result;
-    size_t i = 0;
-    size_t rlen = source.length;
-    
-    // Get whether signed value is negative.
-    static if (!__traits(isUnsigned, T)) {
-        bool isNegative = source[i] == '-';
-        if (isNegative)
-            i++;
-    }
-
-    static if (base == 16) {
-
-        //
-        //                  HEXADECIMAL
-        //
-
-        // Skip '#'
-        if (i+2 < rlen && source[i..i+2] == "0x") {
-            i += 2;
-        } else if (i+1 < rlen && source[i] == '#') {
-            i += 1;
-        }
-
-        // Parse
-        while(i < rlen) {
-            char c = source[i];
-
-            // Ensure only 0-9 and A-F is allowed.
-            if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
-                result <<= 4;
-                result += (c < 'A') ? (c & 0xF) : (c & 0x7) + 9;
-                i++;
-                continue;
-            }
-            break;
-        }
-
-    } else static if (base == 10) {
-
-        //
-        //                  DECIMAL
-        //
-
-        while(i < rlen) {
-            char c = source[i++];
-
-            if (c >= '0' && c <= '9') {
-                result *= 10;
-                result += c - '0';
-                
-                continue;
-            }
-            break;
-        }
-
-    } else static if (base == 8) {
-
-        // Skip '0o'
-        if (i+2 < rlen && source[i..i+2] == "0o")
-            i += 2;
-
-        //
-        //                  OCTAL
-        //
-        size_t ix = 0;
-        while(i < rlen) {
-
-            char c = source[i++];
-            if (c >= '0' && c <= '7') {
-
-                result <<= 3;
-                result += (c - '0');
-                continue;
-            }
-            break;
-        }
-
-    } else static if (base == 2) {
-
-        // Skip '0b'
-        if (i+2 < rlen && source[i..i+2] == "0b")
-            i += 2;
-
-        //
-        //                  BINARY
-        //
-        while(i < rlen) {
-            char c = source[i++];
-            if (c == '0' || c == '1') {
-
-                result <<= 1;
-                result |= c - '0';
-                continue;
-            }
-            break;
-        }
-
-    } else static assert(0, "Cannot parse base "~base.stringof~" numbers.");
-
-    // Set sign.
-    static if (!__traits(isUnsigned, T)) {
-        if (isNegative)
-            result = -result;
-    }
-    return cast(T)result;
-}
+import nulib.conv.algorithms.common;
 
 /**
     Parses an integer of the given base.
@@ -149,15 +26,33 @@ if (__traits(isIntegral, T)) {
         The integer parsed from the source string if possible,
         otherwise $(D 0).
 */
-T parseInt(T, S)(auto ref S source, int base = 10) @nogc nothrow pure
+T parseInt(T, S)(auto ref S source, int base = 0) @nogc nothrow pure
 if (__traits(isIntegral, T)) {
+    T result = T.init;  // Result
+    T digits = void;    // Throwaway
     switch(base) {
-        case 16:    return parseInt!(T, S, 16)(source);
-        case 10:    return parseInt!(T, S, 10)(source);
-        case 8:     return parseInt!(T, S, 8)(source);
-        case 2:     return parseInt!(T, S, 2)(source);
-        default: return T.init;
+        default: break;
+
+        case 16:
+            cast(void)parseIntString!(T, S, 16)(source, result, digits);
+            break;
+
+        case 10:
+            cast(void)parseIntString!(T, S, 10)(source, result, digits);
+            break;
+
+        case 8:
+            cast(void)parseIntString!(T, S, 8)(source, result, digits);
+            break;
+
+        case 2:
+            cast(void)parseIntString!(T, S, 2)(source, result, digits);
+            break;
+
+        case 0:
+            return parseInt!(T, S)(source, determineIntBase(source));
     }
+    return result;
 }
 
 @("parseInt")
@@ -175,6 +70,13 @@ unittest {
     assert(parseInt!uint("#AABBCCDD", 16) == 0xAABBCCDD);
     assert(parseInt!int("0o224", 8) == 148);
     assert(parseInt!int("0b11011", 2) == 0b11011);
+
+    // Auto detection.
+    assert(parseInt!int("1234") == 1234);
+    assert(parseInt!int("123F") == 0x123F);
+    assert(parseInt!int("0x1234") == 0x1234);
+    assert(parseInt!int("0b1101") == 0b1101);
+    assert(parseInt!int("0o224") == 148);
 }
 
 /**

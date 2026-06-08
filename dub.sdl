@@ -9,7 +9,7 @@ toolchainRequirements ldc=">=1.40.0" frontend=">=2.106"
 targetPath "out/"
 
 // Implements the base of nulib.
-dependency "numem" version=">=1.6.3"
+dependency "numem" version=">=1.6.6"
 importPaths "src/"
 sourcePaths "src/"
 
