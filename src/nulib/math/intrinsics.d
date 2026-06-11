@@ -16,7 +16,7 @@ version (GNU) import gcc.builtins;
 else version (LDC) import ldc.intrinsics;
 else {
     import nmath = nulib.math.floating;
-    import cmath = nulib.c.math;
+    import cmath = core.stdc.math;
 }
 
 @safe @nogc nothrow pure:
@@ -31,7 +31,8 @@ else {
         The square root of $(D x).
 */
 pragma(inline, true)
-T sqrt(T)(T x) if (__traits(isFloating, T)) {
+T sqrt(T)(T x) @trusted
+if (__traits(isFloating, T)) {
     version(LDC) {
         return x < 0 ? T.nan : llvm_sqrt(x);
     } else version(GNU) {
@@ -42,7 +43,7 @@ T sqrt(T)(T x) if (__traits(isFloating, T)) {
         else static if (is(T == real))
             return __builtin_sqrtl(x);
     } else {
-        return cast(T)cmath.sqrt(cast(double)x);
+        return cast(T)(cast(T function(T) @nogc nothrow pure)&cmath.sqrt)(cast(double)x);
     }
 }
 
