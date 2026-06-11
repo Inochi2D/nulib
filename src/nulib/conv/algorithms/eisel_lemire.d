@@ -67,9 +67,9 @@ if (__traits(isFloating, FT)) {
     ulong retExp2 = cast(ulong)(217706*(exp10>>16)+64+ftExpBias) - cast(ulong)clz;
 
     // Approximation
-    u128_t x = mulu64(mantissa, EL_POW10_TABLE[exp10-EL_POW10_MIN_EXP][1]);
+    u128_t x = mulu64(mantissa, EL_POW10_TABLE[cast(size_t)(exp10-EL_POW10_MIN_EXP)][1]);
     if ((x.hi & ftMask) == ftMask && x.lo + mantissa < mantissa) {
-        u128_t y = mulu64(mantissa, EL_POW10_TABLE[exp10-EL_POW10_MIN_EXP][0]);
+        u128_t y = mulu64(mantissa, EL_POW10_TABLE[cast(size_t)(exp10-EL_POW10_MIN_EXP)][0]);
         u128_t merged = u128_t(x.hi, x.lo+y.hi);
         if (merged.lo < x.lo)
             merged.hi++;
