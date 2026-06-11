@@ -57,7 +57,7 @@ if (__traits(isFloating, FT)) {
     enum ulong ftExpBias = FT.max_exp-1;
     enum ulong ftExpBiasHalf = ftExpBias/2;
     enum ulong ftShift = 64-(FT.sizeof*8);
-    enum ulong ftMask = (ftExpBiasHalf<<ftShift) + (cast(ulong)1<<ftShift)-1;
+    enum ulong ftMask = (ftExpBiasHalf<<ftShift) + (1LU<<ftShift)-1;
     enum ulong ftShift54 = 63-(FT.mant_dig+1);
     enum ulong ftSubnormMask = (FT.max_exp*2)-1;
 
