@@ -13,6 +13,10 @@ dependency "numem" version=">=1.6.6"
 importPaths "src/"
 sourcePaths "src/"
 
+// nulib:compression
+subPackage "modules/compression"
+subPackage "modules/compression/z"
+
 // nulib:system
 subPackage {
     name "system"

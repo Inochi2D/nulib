@@ -1,0 +1,29 @@
+name "compression:z"
+description "zlib for nulib:compression"
+authors "RAD Game Tools" "Valve Software" "Rich Geldreich" "Tenacious Software LLC" "Kitsunebi Games EMV"
+copyright "Copyright © 2013-2014, RAD Game Tools and Valve Software, Copyright © 2010-2014, Rich Geldreich and Tenacious Software LLC"
+license "MIT"
+
+toolchainRequirements ldc=">=1.41.0" frontend=">=2.111"
+
+dependency "numem" version="*"
+
+targetType "dynamicLibrary"
+targetName "nu.compression.z"
+targetPath "out/"
+
+copyFiles "LICENSE-miniz"
+
+sourcePaths "src/"
+importPaths "src/" "include/"
+cImportPaths "include/"
+cSourcePaths "include/"
+
+dflags "-mv=nulib.compression.internal=./" \
+    "-betterC" \
+    "-Xcc=-Wno-pragma-once-outside-header" \
+    "-P-D MINIZ_NO_STDIO=1" \
+    "-P-D MINIZ_NO_TIME=1" \
+    "-P-D MINIZ_NO_ARCHIVE_APIS=1" \
+    "-P-D MINIZ_NO_ZLIB_APIS=1" \
+    "-P-D MINIZ_NO_ZLIB_COMPATIBLE_NAMES=1"

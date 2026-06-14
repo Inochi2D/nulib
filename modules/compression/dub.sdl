@@ -1,0 +1,24 @@
+name "compression"
+description "NuLib compression and decompression algorithms"
+
+toolchainRequirements ldc=">=1.41.0" frontend=">=2.111"
+
+targetName "nu.compression"
+targetPath "out/"
+
+dependency "numem" version="*"
+dependency "nulib" path="../../"
+
+dependency "nulib:compression:z" path="../../" optional=true default=false
+dflags "-mv=nulib.compression=src/"
+
+configuration "library" {
+    targetType "staticLibrary"
+}
+
+configuration "unittest" {
+    targetType "autodetect"
+
+    dependency "nusilly" version="~>1.0"
+    workingDirectory "out/"
+}
