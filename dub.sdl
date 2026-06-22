@@ -88,7 +88,7 @@ subPackage {
 
 // Build configurations, static should be preferred.
 // Do NOT change the order of these.
-configuration "library" {
+configuration "static" {
     targetType "staticLibrary"
 }
 

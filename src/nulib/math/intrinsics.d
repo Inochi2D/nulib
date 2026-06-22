@@ -22,38 +22,6 @@ else {
 @safe @nogc nothrow pure:
 
 /**
-    Computes the square root of the given value.
-
-    Params:
-        x = The value
-    
-    Returns:
-        The square root of $(D x).
-*/
-pragma(inline, true)
-T sqrt(T)(T x) @trusted
-if (__traits(isFloating, T)) {
-    version(LDC) {
-        return x < 0 ? T.nan : llvm_sqrt(x);
-    } else version(GNU) {
-        static if (is(T == float))
-            return __builtin_sqrtf(x);
-        else static if (is(T == double))
-            return __builtin_sqrt(x);
-        else static if (is(T == real))
-            return __builtin_sqrtl(x);
-    } else {
-        return cast(T)(cast(T function(T) @nogc nothrow pure)&cmath.sqrt)(cast(double)x);
-    }
-}
-
-@("sqrt")
-unittest {
-    assert(sqrt(9.0) == 3.0);
-    assert(sqrt(10.0) == 3.1622776601683795);
-}
-
-/**
     Computes sine of the given value.
 
     Params:

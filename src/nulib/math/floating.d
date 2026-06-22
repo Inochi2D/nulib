@@ -13,6 +13,9 @@ module nulib.math.floating;
 import nulib.math.intrinsics;
 import numem.core.traits;
 
+version (GNU) import gcc.builtins;
+else version (LDC) import ldc.intrinsics;
+
 @safe @nogc nothrow pure:
 
 /**
@@ -28,6 +31,24 @@ if (__traits(isFloating, FT)) {
 }
 
 /**
+    Gets whether the given value is almost the same as the
+    other given value.
+
+    Params:
+        x =         The left hand side value,
+        y =         The right hand side value.
+        epsilon =   The maximum allowed difference between the values.
+
+    Returns:
+        $(D true) if the 2 values are almost the same,
+        $(D false) otherwise. 
+*/
+bool isAlmost(T, Y)(T x, Y y, T epsilon = 0.00001) @safe @nogc nothrow pure
+if (__traits(isFloating, T) && __traits(isFloating, Y)) {
+    return abs(y - x) < epsilon;
+}
+
+/**
     Determines whether the given value is NaN (Not a Number)
 
     Params:
@@ -37,7 +58,8 @@ if (__traits(isFloating, FT)) {
         $(D true) if $(D x) is NaN,
         $(D false) otherwise.
 */
-bool isNaN(T)(T x) @safe @nogc nothrow pure if (__traits(isFloating, T)) {
+bool isNaN(T)(T x) @safe @nogc nothrow pure
+if (__traits(isFloating, T)) {
     return x != x;
 }
 
@@ -81,7 +103,8 @@ unittest {
         $(D true) if $(D x) is an infinite floating point number,
         $(D false) otherwise.
 */
-bool isInfinity(T)(T x) @trusted @nogc nothrow pure if (__traits(isFloating, T)) {
+bool isInfinity(T)(T x) @trusted @nogc nothrow pure
+if (__traits(isFloating, T)) {
     static if (is(T == float)) {
         return ((*cast(uint *)&x) & 0x7FFF_FFFF) == 0x7F80_0000;
     } else static if (is(T == double)) {
@@ -107,7 +130,8 @@ unittest {
     Returns:
         The factional part of the given value.
 */
-T fract(T)(T value) if(__traits(isFloating, T)) {
+T fract(T)(T value) @safe @nogc nothrow pure
+if(__traits(isFloating, T)) {
     return cast(T)(cast(real)value - trunc(cast(real)value));
 }
 
@@ -125,7 +149,6 @@ unittest {
     Returns:
         The arc-tangent of $(D x).
 */
-version(DigitalMars)
 T atan(T)(T x) @safe @nogc nothrow pure {
     static if (is(T == float) && T.mant_dig == 24) {
 
@@ -136,7 +159,6 @@ T atan(T)(T x) @safe @nogc nothrow pure {
             8.05374449538E-2,
         ];
     } else static if (is(T == double)) {
-
         static immutable T[5] P = [
             -6.485021904942025371773E1L,
             -1.228866684490136173410E2L,
@@ -152,7 +174,6 @@ T atan(T)(T x) @safe @nogc nothrow pure {
             2.485846490142306297962E1L,
             1.000000000000000000000E0L,
         ];
-
         enum T MOREBITS = 6.123233995736765886130E-17L;
         
     } else static assert(0, T.stringof~" is not supported currently!");
@@ -234,7 +255,6 @@ T atan(T)(T x) @safe @nogc nothrow pure {
     Returns:
         The arc-tangent of $(D y / x).
 */
-version(DigitalMars)
 T atan2(T)(T y, T x) @safe pure nothrow @nogc {
 
     // Special cases.
@@ -281,6 +301,116 @@ T atan2(T)(T y, T x) @safe pure nothrow @nogc {
 
     return z;
 }
+
+/**
+    Calculates the square-root of the given value.
+
+    Params:
+        x = The value.
+
+    Returns:
+        The square root of the given value,
+        non-finite values are undefined.
+*/
+T sqrt(T)(T x) @trusted @nogc nothrow pure
+if (__traits(isFloating, T)) {
+    version(LDC) {
+        return x < 0 ? T.nan : llvm_sqrt(x);
+    } else version(GNU) {
+        static if (is(T == float))
+            return __builtin_sqrtf(x);
+        else static if (is(T == double))
+            return __builtin_sqrt(x);
+        else static if (is(T == real))
+            return __builtin_sqrtl(x);
+    } else {
+        return rsqrt(x) * x;
+    }
+}
+
+@("sqrt")
+unittest {
+    assert(sqrt(4.0).isAlmost(2.0));
+}
+
+/**
+    Calculates the inverse square-root of the given value.
+
+    Params:
+        x = The value.
+
+    Returns:
+        The inverse square root of the given value,
+        non-finite values are undefined.
+*/
+T rsqrt(T)(T x) @safe @nogc nothrow pure
+if (__traits(isFloating, T)) {
+    static if (is(T == float)) {
+        enum MAGIC = 0x5F375A86;
+    } else static if (is(T == double)) {
+        enum MAGIC = 0x5FE6EB50C7B537A9;
+    } else assert(T.stringof, " is not supported.");
+    union Y { T f; long i; }
+
+    Y conv;
+    conv.f = x;
+    conv.i = MAGIC - (conv.i >> 1);
+
+    // 3 newtown iterations seem to give an accurate enough result.
+    T x2 = (x * 0.5);
+    conv.f = conv.f * (1.5 - (x2 * conv.f * conv.f));
+    conv.f = conv.f * (1.5 - (x2 * conv.f * conv.f));
+    conv.f = conv.f * (1.5 - (x2 * conv.f * conv.f));
+    return conv.f;
+}
+
+/**
+    Calculates the cube-root of the given value.
+
+    Params:
+        x = The value.
+
+    Returns:
+        The cube root of the given value,
+        non-finite values are undefined.
+*/
+T cbrt(T)(T x) @safe @nogc nothrow pure
+if (__traits(isFloating, T)) {
+    return 1.0/rcbrt(x);
+}
+
+/**
+    Calculates the inverse cube-root of the given value.
+
+    Params:
+        x = The value.
+
+    Returns:
+        The inverse cube root of the given value,
+        non-finite values are undefined.
+*/
+T rcbrt(T)(T x) @safe @nogc nothrow pure
+if (__traits(isFloating, T)) {
+    enum MAGIC = 0x54A223B4;
+    union Y { float f; long i; }
+
+    Y conv;
+    conv.f = cast(float)x;
+    conv.i = MAGIC - (conv.i / 3);
+
+    // 3 newtown iterations seem to give an accurate enough result.
+    T x3 = (x * 0.3333333);
+    conv.f *= (1.3333333 - x3 * conv.f * conv.f * conv.f);
+    conv.f *= (1.3333333 - x3 * conv.f * conv.f * conv.f);
+    conv.f *= (1.3333333 - x3 * conv.f * conv.f * conv.f);
+    return cast(T)conv.f;
+}
+
+@("cbrt")
+unittest {
+    assert(cbrt(8.0f).isAlmost(2.0));
+}
+
 
 /**
     Decomposes the given number into a normalized fraction

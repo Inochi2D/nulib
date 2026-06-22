@@ -221,7 +221,6 @@ T copysign(T)(T to, T from) @safe @nogc nothrow pure if (__traits(isScalar, T)) 
     return signbit(to) == signbit(from) ? to : -to;
 }
 
-
 /**
     Raises the given number $(D x) by the power of $(D n).
 
