@@ -26,7 +26,6 @@
 */
 module nulib.math;
 import nulib.math.fixed;
-public import nulib.math.intrinsics;
 public import nulib.math.floating;
 public import numem.core.math;
 
