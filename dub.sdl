@@ -10,6 +10,7 @@ targetPath "out/"
 
 // Implements the base of nulib.
 dependency "numem" version=">=1.6.6"
+dependency "nurt" version="*" optional=true default=false
 importPaths "src/"
 sourcePaths "src/"
 
