@@ -102,7 +102,7 @@ if (__traits(isIntegral, S)) {
 
     ptrdiff_t wlen = nu_min(digits(source, base), destination.length);
     D[] dst = cast(D[])destination;
-    S num = source;
+    Unqual!S num = source;
 
     ptrdiff_t   j = 0;      // write offset
     ptrdiff_t   w = 0;      // written count

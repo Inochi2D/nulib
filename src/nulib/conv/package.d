@@ -39,6 +39,14 @@ Unqual!TTo to(TTo, TFrom)(TFrom value) @nogc nothrow {
 
         // cast(TTo)value
         return value.opCast!TTo();
+    } else static if (__traits(isIntegral, TFrom) && isSomeString!TTo) {
+
+        // toString(value)
+        return toString(value);
+    } else static if (__traits(isFloating, TFrom) && isSomeString!TTo) {
+
+        // toString(value)
+        return toString(value);
     } else static if (isSomeString!TTo && is(typeof(TFrom.toString))) {
         
         // value.toString()
@@ -51,14 +59,6 @@ Unqual!TTo to(TTo, TFrom)(TFrom value) @nogc nothrow {
 
         // value.parseFloat!TTo()
         return parseFloat!TTo(value);
-    } else static if (__traits(isIntegral, TFrom) && isSomeString!TTo) {
-
-        // toString(value
-        return toString(value);
-    } else static if (__traits(isFloating, TFrom) && isSomeString!TTo) {
-
-        // toString(value
-        return toString(value);
     } else {
         debug static assert(0, "Can't convert "~TFrom.stringof~" to "~TTo.stringof~"!");
         return typeof(return).init;
