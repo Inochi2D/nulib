@@ -743,7 +743,7 @@ if (isSomeChar!T) {
 */
 ptrdiff_t digits(T)(T value, uint base = 10) @system @nogc pure nothrow
 if (__traits(isIntegral, T)) {
-    Unqual!T tmp = value;
+    ptrdiff_t tmp = value;
 
     // Impossible condition
     if (base <= 1)
@@ -757,10 +757,12 @@ if (__traits(isIntegral, T)) {
         }
     }
 
+    import std.stdio : writeln;
+
     do {
         c++;
-        tmp /= base;
-    } while(value != 0);
+        tmp /= cast(ptrdiff_t)base;
+    } while(tmp != 0);
     return c;
 }
 
