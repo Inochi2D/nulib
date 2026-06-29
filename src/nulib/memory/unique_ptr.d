@@ -121,12 +121,7 @@ public:
         A unique pointer pointing to the newly allocated object.
 */
 unique_ptr!T unique_new(T, Args...)(Args args) @trusted {
-    auto ptr = unique_ptr!T(nogc_new!T(args));
-
-    // NOTE: This extra retain is needed since we can't
-    //
-    ptr.ptr.retain!true;
-    return ptr; 
+    return unique_ptr!T(nogc_new!T(args));
 }
 
 @("unique_ptr")
