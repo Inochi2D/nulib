@@ -20,6 +20,49 @@ import numem.core.math;
 
 
 //
+//              TYPES
+//
+
+/**
+    Gets whether the characters in the given buffer should be parsed
+    as a floating pointer number or integer.
+
+    Params:
+        buffer =    The buffer to check
+        sep =       The decimal point seperator
+
+    Returns:
+        $(D true) if the buffer's upcoming characters can be parsed as
+        an integer, $(D false) otherwise.
+*/
+bool isIntegerString(string buffer, char sep='.') @nogc nothrow pure {
+    import std.ascii : isDigit, toLower;
+    size_t i = 0;
+    
+    // Skip negative sign
+    if (buffer[i] == '-' || buffer[i] == '+')
+        i++;
+
+    // Not a number.
+    if (!isDigit(buffer[i]))
+        return false;
+
+    while(i < buffer.length) {
+        char c = buffer[i++];
+    
+        if (c == sep || toLower(c) == 'e')
+            return false;
+
+        if (!isDigit(c))
+            return true;
+    }
+    return true;
+}
+
+
+
+
+//
 //              INTEGERS
 //
 

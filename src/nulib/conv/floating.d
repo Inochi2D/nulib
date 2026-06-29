@@ -29,6 +29,7 @@
         $(LINK2 https://arxiv.org/pdf/2101.11408, Number Parsing at a Gigabyte per Second)
 */
 module nulib.conv.floating;
+import nulib.conv.integral;
 import nulib.conv.algorithms.common;
 import nulib.conv.algorithms.eisel_lemire;
 import nulib.conv.algorithms.sdc;
@@ -56,6 +57,13 @@ if (__traits(isFloating, FT)) {
     FT result;
     if (parseSpecial!FT(source, result)) {
         return result;
+    }
+
+    // If it's just an integer, parse it as such.
+    if (isIntegerString(source, sep)) {
+        long iresult;
+        long digits;
+        return parseIntString!(long, S, 10)(source, iresult, digits) > 0 ? iresult : FT.nan;
     }
 
     // Try parsing float.
@@ -90,7 +98,20 @@ unittest {
     foreach(i; 0..10_000) {
         float ft = uniform01!float();
         float r = parseFloat!float(ft.text);
-        assert(fabs(r - ft) < 0.00001, r.text~" != "~ft.text);
+        assert(r.isAlmost(ft), r.text~" != "~ft.text);
+    }
+
+    // Parse specials.
+    assert(!parseFloat!(float)("nan").isFinite);
+    assert(!parseFloat!(float)("-nan").isFinite);
+    assert(!parseFloat!(float)("+nan").isFinite);
+    assert(parseFloat!(float)("infinity").isInfinity);
+    assert(parseFloat!(float)("-infinity").isInfinity);
+    assert(parseFloat!(float)("+infinity").isInfinity);
+
+    // Parse whole numbers
+    static foreach(i; -10..10) {
+        assert(parseFloat!float((cast(int)i).stringof).isAlmost(i));
     }
 }
 
@@ -103,7 +124,20 @@ unittest {
     foreach(i; 0..10_000) {
         double ft = uniform01!double();
         double r = parseFloat!double(ft.text);
-        assert(fabs(r - ft) < 0.00001, r.text~" != "~ft.text);
+        assert(r.isAlmost(ft), r.text~" != "~ft.text);
+    }
+
+    // Parse specials.
+    assert(!parseFloat!(double)("nan").isFinite);
+    assert(!parseFloat!(double)("-nan").isFinite);
+    assert(!parseFloat!(double)("+nan").isFinite);
+    assert(parseFloat!(double)("infinity").isInfinity);
+    assert(parseFloat!(double)("-infinity").isInfinity);
+    assert(parseFloat!(double)("+infinity").isInfinity);
+
+    // Parse whole numbers
+    static foreach(i; -10..10) {
+        assert(parseFloat!double((cast(int)i).stringof).isAlmost(i));
     }
 }
 

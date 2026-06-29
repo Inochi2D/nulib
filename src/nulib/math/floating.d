@@ -45,8 +45,8 @@ if (__traits(isFloating, FT)) {
         $(D false) otherwise. 
 */
 bool isAlmost(T, Y)(T x, Y y, T epsilon = 0.00001) @safe @nogc nothrow pure
-if (__traits(isFloating, T) && __traits(isFloating, Y)) {
-    return abs(y - x) < epsilon;
+if (__traits(isFloating, T) && __traits(isScalar, Y)) {
+    return abs(cast(T)y - x) < epsilon;
 }
 
 /**
