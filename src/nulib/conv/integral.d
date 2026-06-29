@@ -134,7 +134,7 @@ if (__traits(isIntegral, S)) {
         // Write the data.
         do {
 
-            dst[--i] = _HEX_TABLE[num % base];
+            dst[--i] = _HEX_TABLE[cast(size_t)(num % base)];
             num = cast(S)(num / base);
         } while(i > j && num > 0);
         return wlen;
