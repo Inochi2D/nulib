@@ -9,7 +9,7 @@ targetPath "out/"
 dependency "numem" version="*"
 dependency "nulib" path="../../"
 
-dependency "nulib:compression:z" path="../../" optional=true default=false
+dependency "nulib:compression.z" path="../../" optional=true default=false
 dflags "-mv=nulib.compression=src/"
 
 configuration "library" {
