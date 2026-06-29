@@ -741,15 +741,15 @@ if (isSomeChar!T) {
         How many digits a string containing the given value would take.
         $(D -1) if this is somehow impossible to compute.
 */
-ptrdiff_t digits(T)(T value, uint base = 10) @system @nogc pure nothrow
+uint digits(T)(T value, uint base = 10) @system @nogc pure nothrow
 if (__traits(isIntegral, T)) {
-    ptrdiff_t tmp = value;
+    long tmp = cast(long)value;
 
     // Impossible condition
     if (base <= 1)
         return -1;
 
-    size_t c = 0;
+    uint c = 0;
     static if (!__traits(isUnsigned, T)) {
         if (value < 0) {
             tmp = -value;
@@ -761,9 +761,9 @@ if (__traits(isIntegral, T)) {
 
     do {
         c++;
-        tmp /= cast(ptrdiff_t)base;
+        tmp /= cast(long)base;
     } while(tmp != 0);
-    return c;
+    return cast(uint)c;
 }
 
 /**
