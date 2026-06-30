@@ -50,7 +50,7 @@ bool isIntegerString(string buffer, char sep='.') @nogc nothrow pure {
     while(i < buffer.length) {
         char c = buffer[i++];
     
-        if (c == sep || toLower(c) == 'e')
+        if (c == sep)
             return false;
 
         if (!isDigit(c))

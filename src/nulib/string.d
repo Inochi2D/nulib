@@ -757,8 +757,6 @@ if (__traits(isIntegral, T)) {
         }
     }
 
-    import std.stdio : writeln;
-
     do {
         c++;
         tmp /= cast(long)base;
