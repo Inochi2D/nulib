@@ -20,7 +20,7 @@ version(Windows):
 class Win32Semaphore : NativeSemaphore {
 private:
 @nogc:
-    HANDLE handle_;
+    void* handle_;
     
 public:
 
@@ -103,5 +103,5 @@ NativeSemaphore _nu_native_semaphore_create(uint count) @trusted @nogc nothrow {
 //
 extern(Windows) @nogc nothrow:
 
-extern HANDLE CreateSemaphoreA(void*, int, int, void*);
-extern uint ReleaseSemaphore(HANDLE, int, int*);
+extern void* CreateSemaphoreA(void*, int, int, void*);
+extern uint ReleaseSemaphore(void*, int, int*);

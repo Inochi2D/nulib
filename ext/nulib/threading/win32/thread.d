@@ -22,7 +22,7 @@ private:
 @nogc:
     uint suspendCount_;
     shared(ThreadContext) ctx_;
-    HANDLE handle_;
+    void* handle_;
     uint tid_;
 
 public:
@@ -39,7 +39,7 @@ public:
     this(ThreadContext ctx) @trusted nothrow {
         this.ctx_ = cast(shared(ThreadContext))ctx;
         nu_atomic_store_32(this.suspendCount_, 1);
-        handle_ = cast(HANDLE)_beginthreadex(
+        handle_ = cast(void*)_beginthreadex(
             null, 
             0u, 
             &_nu_thread_win32_entry, 
@@ -54,7 +54,7 @@ public:
     /**
         Creates a thread by providing an existing handle.
     */
-    this(HANDLE handle) @trusted {
+    this(void* handle) @trusted {
         this.handle_ = handle;
     }
     
@@ -167,7 +167,7 @@ alias fp2_t = extern(D) void function(void* userData) @nogc;
 alias fp_t = extern(Windows) uint function(void*);
 
 extern void Sleep(int);
-extern int ResumeThread(HANDLE);
-extern int SuspendThread(HANDLE);
+extern int ResumeThread(void*);
+extern int SuspendThread(void*);
 extern int GetCurrentThreadId();
 extern ptrdiff_t _beginthreadex(void*, uint, fp_t, void*, uint, uint*);
