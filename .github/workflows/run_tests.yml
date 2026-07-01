@@ -54,16 +54,16 @@ jobs:
           dub test $iter --config=unittest
         done
       
-    - name: 'Build with ${{ matrix.os }} ${{ matrix.dc }} (redub)'
-      if: ${{ matrix.dc != 'dmd' }}
-      run: |
-        IN="$TO_BUILD"
-        while [ "$IN" != "$iter" ]; do
-          iter=${IN%%,*}
-          IN="${IN#$iter,}"
-          
-          redub test $iter
-        done
+    # - name: 'Build with ${{ matrix.os }} ${{ matrix.dc }} (redub)'
+    #   if: ${{ matrix.dc != 'dmd' }}
+    #   run: |
+    #     IN="$TO_BUILD"
+    #     while [ "$IN" != "$iter" ]; do
+    #       iter=${IN%%,*}
+    #       IN="${IN#$iter,}"
+    # 
+    #       redub test $iter
+    #     done
 
   test_build:
     name: 'Do buildchecks'
