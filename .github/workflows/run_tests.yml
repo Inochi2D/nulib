@@ -16,6 +16,11 @@ permissions:
 jobs:
   test:
     name: 'Build and Test Library'
+    env:
+      TO_BUILD: ",:io,:threading"
+    defaults:
+      run:
+        shell: bash
     strategy:
       matrix:
         os: [macOS-latest, ubuntu-latest, windows-latest]
@@ -38,20 +43,29 @@ jobs:
 
     - name: 'Build with ${{ matrix.os }} ${{ matrix.dc }}' 
       run: |
-        # Build and run tests, as defined by `unittest` configuration
-        # In this mode, `mainSourceFile` is excluded and `version (unittest)` are included
-        # See https://dub.pm/package-format-json.html#configurations
-        dub test --config=unittest
+        IN="$TO_BUILD"
+        while [ "$IN" != "$iter" ]; do
+          iter=${IN%%,*}
+          IN="${IN#$iter,}"
 
-        # Ditto, in release mode.
-        # Sometimes D packages break in release mode, so this is important to test.
-        dub test --config=unittest --build=release
+          # Build and run tests, as defined by `unittest` configuration
+          # In this mode, `mainSourceFile` is excluded and `version (unittest)` are included
+          # See https://dub.pm/package-format-json.html#configurations
+          dub test $iter --config=unittest
+
+          # Ditto, in release mode.
+          # Sometimes D packages break in release mode, so this is important to test.
+          dub test $iter --config=unittest --build=release
+        done
       
     - name: 'Build with ${{ matrix.os }} ${{ matrix.dc }} (redub)'
       if: ${{ matrix.dc != 'dmd' }}
       run: |
-        redub test 
-        redub test --build=release
+        IN="$TO_BUILD"
+        while [ "$IN" != "$iter" ]; do
+          redub test $iter
+          redub test $iter --build=release
+        done
 
   test_build:
     name: 'Do buildchecks'
