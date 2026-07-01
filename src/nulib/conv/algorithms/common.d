@@ -36,7 +36,7 @@ import numem.core.math;
         an integer, $(D false) otherwise.
 */
 bool isIntegerString(string buffer, char sep='.') @nogc nothrow pure {
-    import std.ascii : isDigit, toLower;
+    import nulib.text.ascii : isDigit, toLower;
     size_t i = 0;
     
     // Skip negative sign
