@@ -341,6 +341,8 @@ import core.stdc.string;
 import core.stdc.errno;
 
 version (CRuntime_Microsoft) {
+    extern(C) extern FILE* _wfopen(scope const wchar* filename, scope const wchar* mode) nothrow @nogc;
+
     alias fchar_t = wchar;
     alias _fopen = _wfopen;
 } else {
