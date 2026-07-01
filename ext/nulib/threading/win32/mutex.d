@@ -9,6 +9,7 @@
     Authors:   Luna Nielsen
 */
 module nulib.threading.win32.mutex;
+import nulib.threading.mutex;
 import numem.object;
 
 version(Windows):
@@ -18,10 +19,10 @@ version(Windows):
 */
 class Win32Mutex : NativeMutex {
 private:
+@nogc:
     CRITICAL_SECTION* handle_;
 
 public:
-@nogc:
 
     /// Destructor
     ~this() nothrow {
