@@ -4,6 +4,12 @@ import nulib.math : min;
 import nulib.string;
 import numem;
 
+// C imports
+import core.stdc.stdio;
+import core.stdc.string;
+import core.stdc.errno;
+import core.stdc.config : c_long;
+
 /**
     Flags
 */
@@ -246,7 +252,7 @@ public:
         if (!canSeek())
             return StreamError.notSupported;
 
-        int status = fseek(handle, offset, origin);
+        int status = fseek(handle, cast(c_long)offset, origin.toCSeek);
         return status == 0 ? tell() : StreamError.outOfRange;
     }
 
@@ -336,9 +342,14 @@ StringImpl!(fchar_t) toSupportedEncoding(string str) @nogc {
     }
 }
 
-import core.stdc.stdio;
-import core.stdc.string;
-import core.stdc.errno;
+// Helper that converts a nulib seek origin to a C file seek origin.
+int toCSeek(SeekOrigin origin) @nogc nothrow pure {
+    final switch(origin) with (SeekOrigin) {
+        case start: return SEEK_SET;
+        case relative: return SEEK_CUR;
+        case end: return SEEK_END;
+    }
+}
 
 version (CRuntime_Microsoft) {
     extern(C) extern FILE* _wfopen(scope const wchar* filename, scope const wchar* mode) nothrow @nogc;
