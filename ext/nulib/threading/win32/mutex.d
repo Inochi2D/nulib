@@ -9,6 +9,7 @@
     Authors:   Luna Nielsen
 */
 module nulib.threading.win32.mutex;
+import nulib.threading.win32;
 import nulib.threading.mutex;
 import numem.object;
 
@@ -80,32 +81,4 @@ public:
 */
 extern(C) export NativeMutex _nu_native_mutex_create() @nogc {
     return nogc_new!Win32Mutex();
-}
-
-//
-//              IMPLEMENTATION DETAILS
-//
-private:
-
-//
-//          BINDINGS
-//
-version(Windows) {
-    extern(Windows) @nogc nothrow {
-        /// A critical section object.
-        struct CRITICAL_SECTION {
-            void*   DebugInfo;
-            int     LockCount;
-            int     RecursionCount;
-            void*   OwningThread;
-            void*   LockSemaphore;
-            size_t  SpinCount;
-        }
-
-        extern void DeleteCriticalSection(CRITICAL_SECTION*);
-        extern uint InitializeCriticalSectionAndSpinCount(CRITICAL_SECTION*, uint);
-        extern void EnterCriticalSection(CRITICAL_SECTION*);
-        extern void LeaveCriticalSection(CRITICAL_SECTION*);
-        extern uint TryEnterCriticalSection(CRITICAL_SECTION*);
-    }
 }

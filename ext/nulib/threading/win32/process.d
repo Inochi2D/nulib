@@ -9,6 +9,7 @@
     Authors:   Luna Nielsen
 */
 module nulib.threading.win32.process;
+import nulib.threading.win32;
 import nulib.threading.process;
 import numem;
 
@@ -50,11 +51,3 @@ extern(C) export
 NativeProcess _nu_native_process_this() @nogc @trusted nothrow {
     return nogc_new!Win32Process(GetCurrentProcess());
 }
-
-//
-//          BINDINGS
-//
-extern(Windows):
-extern void* GetCurrentProcess() @trusted @nogc nothrow;
-extern uint GetProcessId(void*) @trusted @nogc nothrow;
-extern bool TerminateProcess(void*, uint) @trusted @nogc nothrow;

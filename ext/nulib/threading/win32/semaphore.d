@@ -9,6 +9,7 @@
     Authors:   Luna Nielsen
 */
 module nulib.threading.win32.semaphore;
+import nulib.threading.win32;
 import nulib.threading.semaphore;
 import numem;
 
@@ -97,11 +98,3 @@ extern(C) export
 NativeSemaphore _nu_native_semaphore_create(uint count) @trusted @nogc nothrow {
     return nogc_new!Win32Semaphore(count);
 }
-
-//
-//          BINDINGS
-//
-extern(Windows) @nogc nothrow:
-
-extern void* CreateSemaphoreA(void*, int, int, void*);
-extern uint ReleaseSemaphore(void*, int, int*);

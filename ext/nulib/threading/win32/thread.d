@@ -9,6 +9,7 @@
     Authors:   Luna Nielsen
 */
 module nulib.threading.win32.thread;
+import nulib.threading.win32;
 import nulib.threading.thread;
 import numem;
 
@@ -147,12 +148,7 @@ void _nu_thread_sleep(uint ms) @trusted @nogc nothrow {
     Sleep(ms);
 }
 
-//
-//          BINDINGS
-//
-extern(Windows) @nogc nothrow:
-enum CREATE_SUSPENDED = 0x00000004;
-
+extern(Windows)
 uint _nu_thread_win32_entry(void* threadContext) @trusted nothrow @nogc {
     ThreadContext* context = cast(ThreadContext*)(threadContext);
     try {
@@ -162,12 +158,3 @@ uint _nu_thread_win32_entry(void* threadContext) @trusted nothrow @nogc {
     }
     return 0;
 }
-
-alias fp2_t = extern(D) void function(void* userData) @nogc;
-alias fp_t = extern(Windows) uint function(void*);
-
-extern void Sleep(int);
-extern int ResumeThread(void*);
-extern int SuspendThread(void*);
-extern int GetCurrentThreadId();
-extern ptrdiff_t _beginthreadex(void*, uint, fp_t, void*, uint, uint*);
