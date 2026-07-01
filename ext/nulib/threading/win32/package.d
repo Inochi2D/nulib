@@ -32,7 +32,9 @@ struct CRITICAL_SECTION {
 enum WAIT_OBJECT_0    = 0;
 enum WAIT_ABANDONED_0 = 128;
 enum CREATE_SUSPENDED = 0x00000004;
+enum INFINITE = 0xFFFFFFFF;
 
+extern int CloseHandle(void*) @trusted @nogc nothrow;
 extern void DeleteCriticalSection(CRITICAL_SECTION*) @trusted @nogc nothrow;
 extern uint InitializeCriticalSectionAndSpinCount(CRITICAL_SECTION*, uint) @trusted @nogc nothrow;
 extern void EnterCriticalSection(CRITICAL_SECTION*) @trusted @nogc nothrow;

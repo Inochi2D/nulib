@@ -11,7 +11,7 @@
 module nulib.threading.win32.mutex;
 import nulib.threading.win32;
 import nulib.threading.mutex;
-import numem.object;
+import numem;
 
 version(Windows):
 
