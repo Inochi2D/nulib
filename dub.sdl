@@ -14,78 +14,12 @@ dependency "nurt" version="*" optional=true default=false
 importPaths "src/"
 sourcePaths "src/"
 
-// nulib:compression
+// Submodules
+subPackage "modules/threading"
+subPackage "modules/system"
+subPackage "modules/io"
 subPackage "modules/compression"
 subPackage "modules/compression/z"
-
-// nulib:system
-subPackage {
-    name "system"
-    description "NuLib System submodule"
-
-    dependency "numem" version="*"
-    dependency "nulib" version="*"
-
-    targetType "staticLibrary"
-    sourcePaths 
-    sourceFiles "ext/nulib/system/**/*.d"
-    importPaths "ext/"
-    
-    configuration "library" {
-        targetType "staticLibrary"
-    }
-
-    configuration "unittest" {
-        targetType "autodetect"
-        dependency "nusilly" version="~>1.0"
-    }
-}
-
-// nulib:io
-subPackage {
-    name "io"
-    description "NuLib IO submodule"
-
-    dependency "numem" version="*"
-    dependency "nulib" version="*"
-
-    targetType "staticLibrary"
-    sourcePaths 
-    sourceFiles "ext/nulib/io/**/*.d"
-    importPaths "ext/"
-    
-    configuration "library" {
-        targetType "staticLibrary"
-    }
-
-    configuration "unittest" {
-        targetType "autodetect"
-        dependency "nusilly" version="~>1.0"
-    }
-}
-
-// nulib:threading
-subPackage {
-    name "threading"
-    description "Threading support for nulib"
-
-    dependency "numem" version="*"
-    dependency "nulib" version="*"
-
-    targetType "staticLibrary"
-    sourcePaths 
-    sourceFiles "ext/nulib/threading/*.d"
-    importPaths "ext/"
-
-    configuration "library" {
-        targetType "staticLibrary"
-    }
-
-    configuration "unittest" {
-        targetType "autodetect"
-        dependency "nusilly" version="~>1.0"
-    }
-}
 
 // Build configurations, static should be preferred.
 // Do NOT change the order of these.
