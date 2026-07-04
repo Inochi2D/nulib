@@ -131,7 +131,7 @@ quark nu_quarkof(string value) @nogc {
         An implementation-owned string if found,
         $(D null) otherwise.
 */
-string nu_quark_str(quark quark_) @nogc {
+string nu_qstrof(quark quark_) @nogc {
     return _nu_gquark_pool.stringof(quark_);
 }
 
