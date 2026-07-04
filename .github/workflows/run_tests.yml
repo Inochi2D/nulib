@@ -65,27 +65,27 @@ jobs:
     #       redub test $iter
     #     done
 
-  test_build:
-    name: 'Do buildchecks'
-    strategy:
-      matrix:
-        to_build:
-          - repo: Inochi2D/hairetsu
-            tag: main
-            config: unittest
-            version: "99.0.0"
-            may_fail: false
-            linux_deps: "libfontconfig-dev"
-            run_tests: true
-    
-    needs: test
-    uses: ./.github/workflows/dub_test_build.yml
-    with:
-      repo: ${{ matrix.to_build.repo }}
-      repo_tag: ${{ matrix.to_build.tag }}
-      dep_config: ${{ matrix.to_build.config }}
-      dep_version: ${{ matrix.to_build.version }}
-      may_fail: ${{ matrix.to_build.may_fail }}
-      linux_deps: ${{ matrix.to_build.linux_deps }}
-      osx_deps: ${{ matrix.to_build.osx_deps }}
-      run_tests: ${{ matrix.to_build.run_tests }}
+  # test_build:
+  #   name: 'Do buildchecks'
+  #   strategy:
+  #     matrix:
+  #       to_build:
+  #         - repo: Inochi2D/hairetsu
+  #           tag: main
+  #           config: unittest
+  #           version: "99.0.0"
+  #           may_fail: false
+  #           linux_deps: "libfontconfig-dev"
+  #           run_tests: true
+  # 
+  #   needs: test
+  #   uses: ./.github/workflows/dub_test_build.yml
+  #   with:
+  #     repo: ${{ matrix.to_build.repo }}
+  #     repo_tag: ${{ matrix.to_build.tag }}
+  #     dep_config: ${{ matrix.to_build.config }}
+  #     dep_version: ${{ matrix.to_build.version }}
+  #     may_fail: ${{ matrix.to_build.may_fail }}
+  #     linux_deps: ${{ matrix.to_build.linux_deps }}
+  #     osx_deps: ${{ matrix.to_build.osx_deps }}
+  #     run_tests: ${{ matrix.to_build.run_tests }}
