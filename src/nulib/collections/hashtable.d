@@ -61,7 +61,7 @@ private:
 
         // Handles getting whether the entry is set.
         pragma(inline, true)
-        bool isSet() @nogc nothrow pure {
+        bool isSet() inout @nogc nothrow pure {
             static if (is(typeof(() => TKey.init is null))) {
                 return key !is null;
             } else {
@@ -71,13 +71,11 @@ private:
     }
 
     // Finds an entry from a key.
-    TEntry* findEntry(TKey key) {
-        this.growIfNeeded();
-
+    inout(TEntry)* findEntry(TKey key) inout {
         size_t hash = hashfn(key);
         size_t index = hash % this.entries.length;
         while(true) {
-            TEntry* entry = &this.entries[index];
+            inout(TEntry)* entry = &this.entries[index];
             if (entry.key == key || !entry.isSet) {
                 return entry;
             }
@@ -87,13 +85,11 @@ private:
     }
 
     // Finds an entry from a key.
-    TEntry* findEntry(TKey key, ref size_t index) {
-        this.growIfNeeded();
-
+    inout(TEntry)* findEntry(TKey key, ref size_t index) inout {
         size_t hash = hashfn(key);
         index = hash % this.entries.length;
         while(true) {
-            TEntry* entry = &this.entries[index];
+            inout(TEntry)* entry = &this.entries[index];
             if (entry.key == key || !entry.isSet) {
                 return entry;
             }
@@ -168,7 +164,7 @@ public:
             $(D false) otherwise.
     */
     bool contains(TKey key) {
-        return this.findEntry(key).isSet;
+        return count > 0 ? this.findEntry(key).isSet : false;
     }
 
     /**
@@ -178,6 +174,9 @@ public:
             key = The key to remove.
     */
     void remove(TKey key) {
+        if (count == 0)
+            return;
+
         size_t idx;
         auto entry = this.findEntry(key, idx);
         if (entry.isSet) {
@@ -207,6 +206,23 @@ public:
             max: max
         );
     }
+    
+    /**
+        Implements the $(D in) operator for the hash table,
+        alternative to contains.
+
+        Returns:
+            A pointer to the value of the given key if found,
+            $(D null) otherwise.
+    */
+    inout(TValue)* opBinaryRight(string op)(TKey key) inout @trusted
+    if (op == "in") {
+        if (count > 0) {
+            auto entry = this.findEntry(key);
+            return entry.isSet ? &entry.value : null;
+        }
+        return null;
+    }
 
     /**
         Indexes the hash table.
@@ -219,6 +235,8 @@ public:
             $(D TValue.init) otherwise.
     */
     TValue opIndex(TKey key) {
+        this.growIfNeeded();
+
         auto entry = this.findEntry(key);
         if (entry.isSet)
             return entry.value;
@@ -234,6 +252,8 @@ public:
             key =   The key to assign.
     */
     void opIndexAssign(TValue value, TKey key) {
+        this.growIfNeeded();
+
         size_t idx;
         auto entry = this.findEntry(key, idx);
         if (!entry.isSet) {
