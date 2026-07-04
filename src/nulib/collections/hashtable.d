@@ -98,6 +98,20 @@ private:
         }
     }
 
+    // Finds an entry from a key.
+    inout(TEntry)* findEntry(inout(TEntry)[] entries, TKey key) inout {
+        size_t hash = hashfn(key);
+        size_t index = hash % entries.length;
+        while(true) {
+            inout(TEntry)* entry = &entries[index];
+            if (entry.key == key || !entry.isSet) {
+                return entry;
+            }
+
+            index = (index+1) % entries.length;
+        }
+    }
+
     // Grows the storage of the hashtable if needed.
     void growIfNeeded() {
         
@@ -113,8 +127,17 @@ private:
         //          entries.
         size_t len = entries.length;
         if (this.count+1 > len*HASH_TABLE_MAX_LOAD) {
-            this.entries = entries.nu_resize(nu_alignup(len+1, HASH_TABLE_GROW_INCREMENTS));
-            nogc_zeroinit(entries[len..$]);
+            auto newEntries = nu_malloca!TEntry(nu_alignup(len+1, HASH_TABLE_GROW_INCREMENTS));
+            if (count > 0) {
+                foreach(i; 0..len) {
+                    if (entries[i].isSet) {
+                        *findEntry(newEntries, entries[i].key) = entries[i];
+                    }
+                }
+
+                nu_cleara(entries);
+            }
+            this.entries = newEntries;
         }
     }
 
@@ -474,4 +497,20 @@ unittest {
         acc += value;
     }
     assert(acc == 10);
+}
+
+@("HashTable many")
+unittest {
+    HashTable!(uint, uint) a;
+    foreach(i; 0..1000) {
+        a[i] = 1;
+    }
+
+    assert(a.length == 1000);
+
+    int acc = 0;
+    foreach(key, value; a)
+        acc += value;
+
+    assert(acc == 1000);
 }
