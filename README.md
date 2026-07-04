@@ -18,12 +18,13 @@ fully no-gc; with the alternate runtime providing the core required hooks for ma
 
 The following packages/modules are provided by NuLib.
 
-| Package           | Module            | Description                              | Supported Platforms |
-| ----------------- | ----------------- | ---------------------------------------- | ------------------- |
-| `nulib`           | `nulib`           | Core NuLib library                       | All                 |
-| `nulib:io`        | `nulib.io`        | File and Network IO                      | 🪟🍎🐧                 |
-| `nulib:system`    | `nulib.system`    | System Integration                       | 🪟🍎🐧                 |
-| `nulib:threading` | `nulib.threading` | Threading and synchronisation primitives | 🪟🍎🐧                 |
+| Package             | Module              | Description                              | Supported Platforms |
+| ------------------- | ------------------- | ---------------------------------------- | ------------------- |
+| `nulib`             | `nulib`             | Core NuLib library                       | All                 |
+| `nulib:io`          | `nulib.io`          | File and Network IO                      | 🪟🍎🐧                 |
+| `nulib:system`      | `nulib.system`      | System Integration                       | 🪟🍎🐧                 |
+| `nulib:threading`   | `nulib.threading`   | Threading and synchronisation primitives | 🪟🍎🐧                 |
+| `nulib:compression` | `nulib.compression` | Compression algorithms.                  | 🪟🍎🐧                 |
 
 ## Why NuLib?
 
