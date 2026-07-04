@@ -26,7 +26,10 @@
 */
 module nulib.math;
 import nulib.math.fixed;
+
 public import nulib.math.floating;
+public import nulib.math.bitmanip;
+
 public import numem.core.math;
 
 // Values obtained from Wolfram Alpha. 116 bits ought to be enough for anybody.
