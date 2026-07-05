@@ -40,11 +40,13 @@ private:
 
     // An entry.
     static struct TEntry {
+        bool alive = false;
         TKey key;
         TValue value;
 
         // dtor
         ~this() @nogc nothrow {
+            this.alive = false;
             static if (is(TKey == U[], U))
                 nu_freea(key);
             else
@@ -62,11 +64,18 @@ private:
         // Handles getting whether the entry is set.
         pragma(inline, true)
         bool isSet() inout @nogc nothrow pure {
-            static if (is(typeof(() => TKey.init is null))) {
-                return key !is null;
-            } else {
-                return key != TKey.init;
-            }
+            return alive;
+        }
+
+        // Handles setting the key.
+        void set(TKey key, TValue value) @nogc nothrow pure {
+            static if (is(typeof(() => TKey.init.nu_dup())))
+                this.key = key.nu_dup();
+            else 
+                this.key = key;
+
+            this.value = value;
+            this.alive = true;
         }
     }
 
@@ -286,11 +295,7 @@ public:
         }
 
         // New key.
-        static if (is(typeof(() => TKey.init.nu_dup())))
-            entry.key = key.nu_dup();
-        else
-            entry.key = key;
-        entry.value = value;
+        entry.set(key, value);
 
         // If we added a new value that was lower or higher than the max, add it.
         if (idx < min) {
