@@ -44,15 +44,15 @@ private:
         TValue value;
 
         // dtor
-        ~this() @nogc {
+        ~this() @nogc nothrow {
             static if (is(TKey == U[], U))
                 nu_freea(key);
             else
-                nogc_delete(key);
+                nogc_trydelete(key);
         }
 
         // postblit
-        this(this) @nogc {
+        this(this) @nogc nothrow {
             static if (is(TKey == U[], U))
                 this.key = key.nu_dup();
             else 
@@ -71,7 +71,7 @@ private:
     }
 
     // Finds an entry from a key.
-    inout(TEntry)* findEntry(TKey key) inout {
+    inout(TEntry)* findEntry(TKey key) nothrow inout {
         size_t hash = hashfn(key);
         size_t index = hash % this.entries.length;
         while(true) {
@@ -85,7 +85,7 @@ private:
     }
 
     // Finds an entry from a key.
-    inout(TEntry)* findEntry(TKey key, ref size_t index) inout {
+    inout(TEntry)* findEntry(TKey key, ref size_t index) nothrow inout {
         size_t hash = hashfn(key);
         index = hash % this.entries.length;
         while(true) {
@@ -99,7 +99,7 @@ private:
     }
 
     // Finds an entry from a key.
-    inout(TEntry)* findEntry(inout(TEntry)[] entries, TKey key) inout {
+    inout(TEntry)* findEntry(inout(TEntry)[] entries, TKey key) nothrow inout {
         size_t hash = hashfn(key);
         size_t index = hash % entries.length;
         while(true) {
@@ -113,7 +113,7 @@ private:
     }
 
     // Grows the storage of the hashtable if needed.
-    void growIfNeeded() {
+    void growIfNeeded() nothrow {
         
         // Handle initial bounds.
         if (entries.length == 0) {
@@ -142,7 +142,7 @@ private:
     }
 
     // Finds the next entry in the given direction.
-    ptrdiff_t findNext(size_t from, int step) {
+    ptrdiff_t findNext(size_t from, int step) nothrow {
         if (this.count == 0)
             return -1;
 
@@ -160,18 +160,18 @@ public:
     /**
         Length of the hash table.
     */
-    @property size_t length() => count;
+    @property size_t length() nothrow pure => count;
 
     /**
         Capacity of the hashtable.
     */
-    @property size_t capacity() => entries.length;
+    @property size_t capacity() nothrow pure => entries.length;
 
     /**
         Clears the map, deleting all of the elements
         within.
     */
-    void clear() @trusted {
+    void clear() @trusted nothrow pure {
         nu_freea(entries);
         this.count = 0;
     }
@@ -186,7 +186,7 @@ public:
             $(D true) if the given key was found,
             $(D false) otherwise.
     */
-    bool contains(TKey key) {
+    bool contains(TKey key) nothrow pure {
         return count > 0 ? this.findEntry(key).isSet : false;
     }
 
@@ -196,7 +196,7 @@ public:
         Params:
             key = The key to remove.
     */
-    void remove(TKey key) {
+    void remove(TKey key) nothrow pure {
         if (count == 0)
             return;
 
@@ -206,8 +206,10 @@ public:
             this.count--;
 
             // Destroy key and value, then re-initialize entry.
-            nogc_delete(*entry);
-            nogc_zeroinit(*entry);
+            assumeNoThrowNoGCPure((TEntry* entry) {
+                nogc_delete(*entry);
+                nogc_zeroinit(*entry);
+            }, entry);
 
             // If we removed a min/max index, recalculate either.
             if (idx == min) {
@@ -221,7 +223,7 @@ public:
     /**
         Makes a clone of this hash table.
     */
-    typeof(this) clone() {
+    typeof(this) clone() nothrow pure {
         return typeof(this)(
             entries: entries.nu_dup(),
             count: count,
@@ -238,7 +240,7 @@ public:
             A pointer to the value of the given key if found,
             $(D null) otherwise.
     */
-    inout(TValue)* opBinaryRight(string op)(TKey key) inout @trusted
+    inout(TValue)* opBinaryRight(string op)(TKey key) inout @trusted nothrow pure
     if (op == "in") {
         if (count > 0) {
             auto entry = this.findEntry(key);
@@ -257,7 +259,7 @@ public:
             The value for the given key if found,
             $(D TValue.init) otherwise.
     */
-    TValue opIndex(TKey key) {
+    TValue opIndex(TKey key) nothrow {
         this.growIfNeeded();
 
         auto entry = this.findEntry(key);
@@ -274,7 +276,7 @@ public:
             value = The value to assign
             key =   The key to assign.
     */
-    void opIndexAssign(TValue value, TKey key) {
+    void opIndexAssign(TValue value, TKey key) nothrow {
         this.growIfNeeded();
 
         size_t idx;
