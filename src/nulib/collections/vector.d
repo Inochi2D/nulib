@@ -281,7 +281,7 @@ public:
         element count.
     */
     void removeAt(size_t i, size_t count) {
-        if (i >= 0 && i+count < memory.length) {
+        if (i >= 0 && i+count <= memory.length) {
             memory.deleteRange(memory[i .. i+count]);
         }
     }
@@ -419,6 +419,10 @@ unittest {
 
     numbers.removeAt(1, 2);
     assert(numbers == [0, 3, 4]);
+
+    vector!int threeItems = [0, 1, 2];
+    threeItems.removeAt(1, 2);
+    assert(threeItems == [0]);
 }
 
 @(".remove(element)")
