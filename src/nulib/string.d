@@ -235,22 +235,22 @@ public:
     /**
         The length of the string.
     */
-    @property size_t length() @safe nothrow { return memory.length; }
+    @property size_t length() const @safe nothrow { return memory.length; }
 
     /**
         Gets the length of the string, with the null terminator.
     */
-    @property size_t realLength() @safe nothrow { return memory.ptr ? memory.length+1 : 0; }
+    @property size_t realLength() const @safe nothrow { return memory.ptr ? memory.length+1 : 0; }
     
     /**
         The length of the string, in bytes.
     */
-    @property size_t usage() @safe nothrow { return memory.length*T.sizeof; }
+    @property size_t usage() const @safe nothrow { return memory.length*T.sizeof; }
 
     /**
         Whether the string is empty.
     */
-    @property bool empty() @safe nothrow { return memory.length == 0; }
+    @property bool empty() const @safe nothrow { return memory.length == 0; }
 
     /**
         Gets a C string pointer to the nstring.
