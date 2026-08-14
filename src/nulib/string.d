@@ -459,10 +459,16 @@ public:
     void opAssign(U)(U other) @trusted
     if (isSomeString!U) {
         static if (is(StringCharType!U == StringCharType!SelfType)) {
-            if (!(flags & STRFLAG_READONLY) && memory.ptr) 
-                nu_free(cast(void*)this.memory.ptr);
-            
+
+            // Note: support self assignment, or sub-slice self-assign
+            void* oldmem = cast(void*) this.memory.ptr;
             this.memory = other.sliceof.nu_dup();
+
+            if (!(flags & STRFLAG_READONLY) && memory.ptr) 
+                nu_free(oldmem);
+            
+
+            // Ensure terminal '\0'
             nu_terminate(memory);
 
             // Take ownership of our new memory.
