@@ -620,6 +620,13 @@ unittest {
     assert(str2 == "Hello, world 2!");
 }
 
+@("nstring: self-assign")
+unittest {
+    nstring s = "Hello";
+    s = s[1..$];
+    assert(s == "ello");
+}
+
 @("nstring: concat convert")
 unittest {
     import std.utf : toUTF8;
