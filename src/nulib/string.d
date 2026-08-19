@@ -336,7 +336,13 @@ public:
             this.flags |= STRFLAG_READONLY;
             this.memory = rhs.memory;
         } else if (rhs) {
-            this.memory = rhs.memory.nu_idup;
+
+            // Note: should be T[] chars = rhs.memory.nu_dup;
+            // However .nu_dup doesn't return a mutable slice
+            T[] chars = cast(T[]) rhs.memory.nu_idup;
+
+            nu_terminate(chars);
+            this.memory = cast(immutable(T)[]) chars;
         } else {
             nogc_zeroinit(cast(T[])this.memory);
         }
