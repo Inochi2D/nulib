@@ -121,7 +121,7 @@ bool validate(inout(char)[] str) {
 
         // Validate length
         size_t clen = getLength(str[i]);
-        if (clen >= i+str.length) return false;
+        if (i+clen > str.length) return false;
         if (clen == 0) return false;
         
         // Validate sequence
@@ -140,6 +140,7 @@ unittest {
     
     assert( validate(nstring("Hello, world!")));
     assert( validate(nstring("こんにちは世界！")));
+    assert( validate(nstring("a")));
 
     // Invalid sequence test
     const char[3] seq1 = [0xC1, 0xBF, 0xCC];
