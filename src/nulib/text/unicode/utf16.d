@@ -50,6 +50,17 @@ bool validate(nwstring str) {
     return validate(str[]);
 }
 
+@("validate: UTF-16 string")
+unittest {
+    assert(validate(nwstring("Hello, world!"w)));
+    assert(validate(nwstring("こんにちは世界！"w)));
+    assert(validate(nwstring("a"w)));
+
+    wchar[3] d = "abc";
+    assert(validate(nwstring(d[0..2])));
+    d[2] = cast(wchar) 0xD800; // unpaired surrogate
+    assert(! validate(nwstring(d[0..3])));
+}
 
 /**
     Validates whether the given nwstring is a valid UTF-16 string.
@@ -72,7 +83,7 @@ bool validate(inout(wchar)[] str) {
 
         // Validate length
         size_t clen = getLength(tmp[i]);
-        if (clen >= i+tmp.length) return false;
+        if (i+clen > tmp.length) return false;
         if (clen == 0) return false;
 
         txt[0..clen] = tmp[i..i+clen];
