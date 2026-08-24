@@ -29,7 +29,7 @@ import nulib.conv.algorithms.common;
 T parseInt(T, S)(auto ref S source, int base = 0) @nogc nothrow pure
 if (__traits(isIntegral, T)) {
     T result = T.init;  // Result
-    T digits = void;    // Throwaway
+    T digits = T.init;    // Throwaway
     switch(base) {
         default: break;
 

@@ -1,0 +1,23 @@
+name "com"
+description "NuLib COM interface"
+
+toolchainRequirements ldc=">=1.41.0" frontend=">=2.111"
+
+targetName "nu.com"
+targetPath "out/"
+
+dependency "numem" version="*"
+dependency "nulib" path="../../"
+
+dflags "-mv=nulib.com=src/"
+
+configuration "library" {
+    targetType "staticLibrary"
+}
+
+configuration "unittest" {
+    targetType "autodetect"
+
+    dependency "nusilly" version="~>1.0"
+    workingDirectory "out/"
+}

@@ -20,6 +20,7 @@ subPackage "modules/system"
 subPackage "modules/io"
 subPackage "modules/compression"
 subPackage "modules/compression/z"
+subPackage "modules/com"
 
 // Build configurations, static should be preferred.
 // Do NOT change the order of these.
