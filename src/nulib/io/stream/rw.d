@@ -362,7 +362,7 @@ public:
             The read value.
     */
     void writeLE(T)(T value) { writeEndian!(Endianess.littleEndian)(value); }
-    void writeBE(T)(T value) { writeEndian!(Endianess.littleEndian)(value); }
+    void writeBE(T)(T value) { writeEndian!(Endianess.bigEndian)(value); }
 
     /**
         Writes a UTF8 string to the stream.
