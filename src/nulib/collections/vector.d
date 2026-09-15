@@ -123,6 +123,26 @@ public:
         Params:
             rhs = slice to copy or move data from.
     */
+    this(ref return scope SelfType rhs) @trusted {
+        if (__ctfe) {
+            this = cast(typeof(this))rhs;
+        } else {
+            static if (hasElaborateMove!T) {
+                memory.resize(rhs.length);
+                nogc_move(memory.memory, rhs);
+            } else {
+                memory.resize(rhs.length);
+                nogc_copy(memory.memory, cast(SelfType)rhs);
+            }
+        }
+    }
+
+    /**
+        Copy-constructor
+
+        Params:
+            rhs = slice to copy or move data from.
+    */
     this(ref return scope inout(SelfType) rhs) @trusted {
         if (__ctfe) {
             this = cast(typeof(this))rhs;
@@ -134,6 +154,21 @@ public:
                 memory.resize(rhs.length);
                 nogc_copy(memory.memory, cast(SelfType)rhs);
             }
+        }
+    }
+
+    /**
+        Move-constructor
+
+        Params:
+            rhs = slice to copy or move data from.
+    */
+    this(return scope inout(SelfType) rhs) @trusted {
+        if (__ctfe) {
+            this = cast(typeof(this))rhs;
+        } else {
+            memory.resize(rhs.length);
+            nogc_move(memory.memory, cast(SelfType)rhs);
         }
     }
 
@@ -294,14 +329,24 @@ public:
             offset =    The offset to insert the value at.
     */
     void insert(T value, size_t offset) {
-        assert(offset < memory.length, "Offset is past the end of the vector");
+        assert(offset <= memory.length, "Offset is past the end of the vector");
 
         // Resize
         size_t ogLength = memory.length;
-        memory.resize(memory.length+1);
+        memory.resize(ogLength+1);
+
+        // Handle append.
+        if (offset == ogLength) {
+            static if (hasElaborateMove!T) {
+                memory.memory[$-1] = value.move();
+            } else {
+                memory.memory[$-1] = value;
+            }
+            return;
+        }
 
         // Move & Insert
-        memory.moveRange(memory[offset+1..ogLength+1], memory[offset..ogLength]);
+        nu_memmove(&memory[offset+1], &memory[offset], (ogLength-offset)*T.sizeof);
         static if (hasElaborateMove!T) {
             memory.memory[offset] = value.move();
         } else {
@@ -385,6 +430,14 @@ unittest {
     foreach(ref str; strs) {
         assert(str == "Hello, world!");
     }
+}
+
+
+@("vector-of-vectors")
+unittest {
+    vector!(vector!uint) test;
+    test ~= vector!uint([1, 2, 3, 4]);
+    assert(test[0] == [1, 2, 3, 4]);
 }
 
 @(".reverse()")
