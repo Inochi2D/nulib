@@ -13,6 +13,14 @@ import numem.core.meta;
 
 /**
     An N-dimensional slice over a contiguous range of memory.
+
+    These slices an in the "universal" format as seen in numpy,
+    this means that the slice stores both the length of each axis,
+    as well as the stride for each dimension.
+
+    Slices do not own the memory that they're a view into, they may
+    modify non-const memory, functions that modify memory are
+    unavailable for const slices.
 */
 struct ndslice(T, size_t N) {
 private:
@@ -41,12 +49,12 @@ public:
     /**
         Side lengths of the ndslice
     */
-    @property size_t[N] length() => lengths_;
+    @property size_t[N] length() inout pure => lengths_;
 
     /**
         Contiguous length of the slice.
     */
-    @property size_t clength() {
+    @property size_t clength() inout pure {
         size_t r = lengths_[0];
         static foreach(i; 1..N)
             r *= lengths_[i];
@@ -61,14 +69,9 @@ public:
             lengths =   Side lengths of the slice.
     */
     this(inout(T)[] slice, IndexArgs lengths) pure nothrow {
-        this.ptr_ = cast(T*)slice.ptr;
-        this.lengths_[0] = lengths[0];
-        this.strides_[0] = lengths[0];
-
-        static foreach(i; 1..N) {
-            this.lengths_[i] = lengths[i];
-            this.strides_[i] = strides_[i-1]*lengths[i];
-        }
+        this.ptr_ = cast(typeof(ptr_))slice.ptr;
+        this.lengths_.tupleof = lengths;
+        this.strides_.tupleof = lengths;
     }
 
     /**
@@ -251,7 +254,7 @@ unittest {
 
     slice[] = 32;
     slice[0, 0] = 1;
-    
+
     assert(slice[0, 0] == 1);
     assert(slice[0, 1] == 32);
 }
