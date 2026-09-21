@@ -9,7 +9,13 @@
     Authors:   Luna Nielsen
 */
 module nulib.collections.ndslice;
+import numem.core.traits;
 import numem.core.meta;
+
+/**
+    Whether the given type is a type of ndslice.
+*/
+enum isNDSlice(T) = is(T == ndslice!U, U...);
 
 /**
     An N-dimensional slice over a contiguous range of memory.
@@ -32,6 +38,11 @@ private:
 public:
 
     /**
+        Amount of dimensions in the slice.
+    */
+    enum Dimensions = N;
+
+    /**
         Type of the ndslice.
     */
     alias SelfType = typeof(this);
@@ -42,17 +53,22 @@ public:
     alias IndexArgs = AliasSeq!(typeof(size_t[N].init.tupleof));
 
     /**
-        Type sequence consisting of N amounts of slice lengths.
+        Type sequence consisting of N amounts of slice ranges.
     */
     alias IndexAssignArgs = AliasSeq!(typeof(size_t[2][N].init.tupleof));
 
     /**
-        Side lengths of the ndslice
+        Pointer to start of the ndslice.
+    */
+    @property inout(T)* ptr() inout pure => ptr_;
+
+    /**
+        Side lengths of the ndslice.
     */
     @property size_t[N] length() inout pure => lengths_;
 
     /**
-        Contiguous length of the slice.
+        Contiguous length of the ndslice.
     */
     @property size_t clength() inout pure {
         size_t r = lengths_[0];
@@ -73,6 +89,106 @@ public:
         this.lengths_.tupleof = lengths;
         this.strides_.tupleof = lengths;
     }
+
+    // Implement public shared slice interface.
+    mixin NDSliceImpl!(T, N);
+}
+
+/**
+    Gets the contiguous length of the given n-dimensional
+    slice side lengths.
+
+    Params:
+        args =  The lengths of each side of the 
+                n-dimensional slice.
+
+    Returns:
+        The contiguous length of an array that can fit the
+        given n-dimensional slice.
+*/
+pragma(inline, true)
+size_t contiguousLengthOf(Args...)(Args args) @nogc nothrow pure 
+if (allSatisfy!(isAnyCompatible, size_t, args)) {
+    size_t r = args[0];
+    static foreach(i; 1..Args.length)
+        r *= args[i];
+    return r;
+}
+
+/**
+    Creates a ndslice over the given slice.
+
+    Params:
+        in_ =   The linear slice to create an ndslice for.
+        args =  The length of each dimension.
+
+    Returns:
+        A slice over the given range if possible,
+        $(D ndslice.init) otherwise.
+*/
+auto ndsliceof(T, Args...)(inout(T)[] in_, Args args) @nogc nothrow pure
+if (allSatisfy!(isAnyCompatible, size_t, args)) {
+
+    // Calculate the total element length requested.
+    size_t tlength = args[0];
+    static foreach(i; 1..Args.length)
+        tlength *= args[i];
+
+    // Ensure that the length doesn't go beyond the input
+    // slice.
+    if (tlength <= in_.length)
+        return ndslice!(T, Args.length)(in_, args);
+    
+    return ndslice!(T, Args.length).init;
+}
+
+/**
+    Creates an iterator over a slice that iterates over all
+    of the valid indices of the given slice.
+*/
+auto toIterND(T)(ref T slice) @nogc nothrow pure
+if (isNDSlice!T) {
+    enum N = T.Dimensions;
+
+    static struct Iter {
+    private:
+    @nogc:
+        size_t c;
+        size_t cLength;
+        size_t[N] lengths;
+        size_t[N] iter;
+
+    public:
+        @property bool empty() => c >= cLength;
+        @property size_t[N] front() const => iter;
+        void popFront() {
+            iter[0]++;
+            c++;
+            static foreach(d; 1..N) {
+                if (iter[d-1] >= lengths[d-1]) {
+                    iter[d-1] = 0;
+                    iter[d]++;
+                }
+            }
+        }
+    }
+
+    return Iter(
+        cLength: slice.clength, 
+        lengths: slice.lengths_
+    );
+}
+
+
+
+//
+//              IMPLEMENTATION DETAILS
+//
+
+// Implements the general interface of NDSlice
+package(nulib.collections)
+template NDSliceImpl(T, size_t N) {
+public:
 
     /**
         Obtains the length of the slice
@@ -114,7 +230,7 @@ public:
     */
     ref inout(T) opIndex(IndexArgs args) @trusted inout pure {
         static foreach(i; 0..N) assert(args[i] <= lengths_[i], "Index outside bounds of array.");
-        inout(T)* iptr = ptr_;
+        inout(T)* iptr = ptr;
         
         // Add offsets.
         static if (N > 1) {
@@ -245,32 +361,6 @@ public:
         }
         return 0;
     }
-}
-
-/**
-    Creates a ndslice over the given slice.
-
-    Params:
-        in_ =   The linear slice to create an ndslice for.
-        args =  The length of each dimension.
-
-    Returns:
-        A slice over the given range if possible,
-        $(D ndslice.init) otherwise.
-*/
-auto ndsliceof(T, Args...)(inout(T)[] in_, Args args) @nogc nothrow pure {
-
-    // Calculate the total element length requested.
-    size_t tlength = args[0];
-    static foreach(i; 1..Args.length)
-        tlength *= args[i];
-
-    // Ensure that the length doesn't go beyond the input
-    // slice.
-    if (tlength <= in_.length)
-        return ndslice!(T, Args.length)(in_, args);
-    
-    return ndslice!(T, Args.length).init;
 }
 
 @("ndslice: linear-to-slice")

@@ -132,11 +132,17 @@ struct ManagedArray(T, bool ownsMemory = true) {
         }
     }
 
-    // Take ownership of memory store.
+    /**
+        Take ownership of store.
+
+        Returns:
+            A slice, that must be freed manually.
+    */
     pragma(inline, true)
     T[] take() {
         auto mem = memory;
         this.memory = null;
+        this.capacity = 0;
         return mem;
     }
 

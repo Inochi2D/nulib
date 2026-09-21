@@ -31,16 +31,15 @@ alias weak_vector(T) = VectorImpl!(T, false);
 struct VectorImpl(T, bool ownsMemory = true) {
 @nogc:
 private:
-    alias SelfType = typeof(this);
     ManagedArray!(T, ownsMemory) memory;
 
 public:
     alias value this;
 
     /**
-        Gets the internal memory slice.
+        Type of the vector.
     */
-    @property T[] value() @trusted nothrow pure { return memory; }
+    alias SelfType = typeof(this);
 
     /**
         The length of the vector
@@ -61,6 +60,14 @@ public:
         The length of the vector, in bytes.
     */
     @property size_t usage() @safe nothrow { return memory.length*T.sizeof; }
+
+    /**
+        Slice of the data stored in the vector.
+    */
+    @property T[] data() @trusted nothrow pure { return memory; }
+
+    deprecated("Use .data instead, use .take to take ownership.")
+    alias value = data;
 
     /**
         Gets a pointer to the first element of the
@@ -268,6 +275,16 @@ public:
     }
 
     /**
+        Swaps this vector's internal state with another's.
+
+        Params:
+            other = The other vector to swap state with.
+    */
+    void swap(ref SelfType other) {
+        nu_swap(this.memory, other.memory);
+    }
+
+    /**
         Pops the front element of the vector.
     */
     void popFront() {
@@ -292,6 +309,9 @@ public:
 
     /**
         Removes an element from the vector matching the given element.
+
+        Params:
+            element = The element to remove.
     */
     void remove(T element) {
         foreach_reverse(i; 0..memory.length) {
@@ -304,6 +324,9 @@ public:
 
     /**
         Removes the element at the given index.
+
+        Params:
+            i = The index of the element to remove.
     */
     void removeAt(size_t i) {
         if (i >= 0 && i < memory.length) {
@@ -314,6 +337,10 @@ public:
     /**
         Removes the elements at the given index with the given
         element count.
+
+        Params:
+            i =     The start index of the elements to remove.
+            count = The amount of elements to remove.
     */
     void removeAt(size_t i, size_t count) {
         if (i >= 0 && i+count <= memory.length) {
