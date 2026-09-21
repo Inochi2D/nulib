@@ -247,10 +247,36 @@ public:
     }
 }
 
+/**
+    Creates a ndslice over the given slice.
+
+    Params:
+        in_ =   The linear slice to create an ndslice for.
+        args =  The length of each dimension.
+
+    Returns:
+        A slice over the given range if possible,
+        $(D ndslice.init) otherwise.
+*/
+auto ndsliceof(T, Args...)(inout(T)[] in_, Args args) @nogc nothrow pure {
+
+    // Calculate the total element length requested.
+    size_t tlength = args[0];
+    static foreach(i; 1..Args.length)
+        tlength *= args[i];
+
+    // Ensure that the length doesn't go beyond the input
+    // slice.
+    if (tlength <= in_.length)
+        return ndslice!(T, Args.length)(in_, args);
+    
+    return ndslice!(T, Args.length).init;
+}
+
 @("ndslice: linear-to-slice")
 unittest {
     uint[32*32] a = 0;
-    auto slice = ndslice!(uint, 2)(a, 32, 32);
+    auto slice = a.ndsliceof(32, 32);
 
     slice[] = 32;
     slice[0, 0] = 1;
