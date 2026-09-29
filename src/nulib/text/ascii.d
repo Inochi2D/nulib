@@ -13,14 +13,14 @@ module nulib.text.ascii;
 @nogc nothrow pure:
 
 /**
-    Gets whether the character is ascii
+    Gets whether the character is ascii.
 */
 bool isASCII(char c) {
     return c < 128;
 }
 
 /**
-    Gets whether the character is a hexidedcimal digit
+    Gets whether the character is a hexadecimal digit.
 */
 bool isHex(char c) {
     return 
@@ -70,6 +70,14 @@ bool isAlphaNumeric(char c) {
 }
 
 /**
+    Gets whether the character is whitespace.
+    That is: ' ', '\n', '\r', '\t', '\v', or '\f'.
+*/
+bool isWhite(char c) {
+    return c == ' ' || (c >= '\t' && c <= '\r');
+}
+
+/**
     Gets whether the character is printable
 */
 bool isPrintable(char c) {
@@ -77,7 +85,7 @@ bool isPrintable(char c) {
 }
 
 /**
-    Gets whether the character is an ASCII non-printable escape character
+    Gets whether the character is an ASCII non-printable escape character.
 */
 bool isEscapeCharacter(char c) {
     return
