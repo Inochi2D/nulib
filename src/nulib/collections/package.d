@@ -19,3 +19,4 @@ public import nulib.collections.map;
 public import nulib.collections.stack;
 public import nulib.collections.ndslice;
 public import nulib.collections.ndarray;
+public import nulib.collections.smallvector;
