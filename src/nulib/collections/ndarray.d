@@ -10,7 +10,6 @@
 */
 module nulib.collections.ndarray;
 import nulib.collections.internal.marray;
-import nulib.collections.internal.cmp;
 import nulib.collections.ndslice;
 import numem.core.traits;
 import numem.core.meta;

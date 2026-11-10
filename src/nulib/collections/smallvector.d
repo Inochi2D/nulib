@@ -9,7 +9,6 @@
     Authors:   Luna Nielsen
 */
 module nulib.collections.smallvector;
-import nulib.collections.internal.cmp;
 import numem.core.hooks;
 import numem.core.traits;
 import numem;

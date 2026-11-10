@@ -10,7 +10,6 @@
 */
 module nulib.collections.vector;
 import nulib.collections.internal.marray;
-import nulib.collections.internal.cmp;
 import numem.core.hooks;
 import numem.core.traits;
 import numem;
